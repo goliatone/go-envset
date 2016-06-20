@@ -10,15 +10,31 @@ import (
 	"github.com/vaughan0/go-ini"
 )
 
+var environments []string
+
 func init() {
-	//we should load .envsetrc
+	//TODO: we need to get this from envsetrc
+	environments = []string{"development", "production", "staging", "testing", "local"}
 
 	_, filename, _, _ := runtime.Caller(1)
 	dirname := filepath.Dir(filename)
+
 	//recursively walk directory structure upward, trying to
 	//find our file until we reach root
-	fmt.Println(dirname)
-	fmt.Println(filepath.Clean(dirname + "/.."))
+
+	for dirname != "/" {
+		dirname = filepath.Clean(dirname + "/..")
+		filename = filepath.Join(dirname, ".envsetrc")
+
+		config, err := ini.LoadFile(filename)
+		if err == nil {
+			envs := config["environments"]
+			fmt.Printf("config: %q", envs)
+
+			// environments = config.Get("environment")
+			break
+		}
+	}
 }
 
 func main() {
@@ -36,6 +52,11 @@ func main() {
 
 	for name, section := range env {
 		if name == environment {
+			if !validEnvironment(environment, environments) {
+				notValidEnvironmentMessage(environment)
+				os.Exit(1)
+			}
+
 			found = true
 			for key, value := range section {
 				os.Setenv(key, value)
@@ -54,4 +75,17 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
+}
+
+func validEnvironment(env string, list []string) bool {
+	for _, v := range list {
+		if v == env {
+			return true
+		}
+	}
+	return false
+}
+
+func notValidEnvironmentMessage(env string) {
+	fmt.Println("Environment not recognized")
 }
