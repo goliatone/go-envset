@@ -14,6 +14,7 @@ var environments []string
 
 func init() {
 	//TODO: we need to get this from envsetrc
+	//use https://github.com/jinzhu/configor
 	environments = []string{"development", "production", "staging", "testing", "local"}
 
 	_, filename, _, _ := runtime.Caller(1)
@@ -21,7 +22,6 @@ func init() {
 
 	//recursively walk directory structure upward, trying to
 	//find our file until we reach root
-
 	for dirname != "/" {
 		dirname = filepath.Clean(dirname + "/..")
 		filename = filepath.Join(dirname, ".envsetrc")
@@ -38,7 +38,11 @@ func init() {
 }
 
 func main() {
-
+	//Show help
+	if len(os.Args) == 1 {
+		showHelpMessage()
+		os.Exit(0)
+	}
 	//This should recursively try to find an envset file
 	//from here upwards.
 	env, err := ini.LoadFile(".envset")
@@ -88,4 +92,8 @@ func validEnvironment(env string, list []string) bool {
 
 func notValidEnvironmentMessage(env string) {
 	fmt.Println("Environment not recognized")
+}
+
+func showHelpMessage() {
+
 }
