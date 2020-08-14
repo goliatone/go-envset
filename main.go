@@ -29,8 +29,8 @@ func init() {
 		config, err := ini.LoadFile(filename)
 		if err == nil {
 			envs := config["environments"]
-			fmt.Printf("config: %q", envs)
-
+			fmt.Printf("config: %q\n", envs)
+			fmt.Printf("path: %s\n", filename)
 			// environments = config.Get("environment")
 			break
 		}
@@ -53,6 +53,7 @@ func main() {
 
 	found := false
 	environment := os.Args[1]
+	vars := make([]string, 0)
 
 	for name, section := range env {
 		if name == environment {
@@ -63,13 +64,20 @@ func main() {
 
 			found = true
 			for key, value := range section {
-				os.Setenv(key, value)
+				// os.Setenv(key, value)
+				vars = append(vars, fmt.Sprintf("%s=%s", key, value))
+				// vars[key] = value
 			}
 		}
 	}
 	if found == false {
-		fmt.Println("Error, environment %q not found.", environment)
+		fmt.Printf("Error, environment %q not found.\n", environment)
 		os.Exit(1)
+	}
+
+	if len(os.Args) < 3 {
+		showCurrentEnvironment(vars)
+		os.Exit(0)
 	}
 
 	command := os.Args[3]
@@ -78,6 +86,7 @@ func main() {
 	cmd := exec.Command(command, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = vars
 	cmd.Run()
 }
 
@@ -94,6 +103,12 @@ func notValidEnvironmentMessage(env string) {
 	fmt.Println("Environment not recognized")
 }
 
-func showHelpMessage() {
+func showCurrentEnvironment(vars []string) {
+	for _, value := range vars {
+		fmt.Printf("%s\n", value)
+	}
+}
 
+func showHelpMessage() {
+	fmt.Println("envset: the environment management friend")
 }
