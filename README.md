@@ -7,6 +7,7 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir].
 ---
 
 ## Environment level configuration
+
 Application configuration usually is environment specific and changes between build distributions.
 
 If you follow the [12 factor app][12factor] guidelines, then you know you should store your configuration in the environment.
@@ -148,3 +149,12 @@ ChildProcess.spawn process.env.SHELL, ['-ilc', @command + ">&3"],
 [12factor]: http://12factor.net/config
 [vcn]: https://github.com/goliatone/vcn
 [npm-fix-perm]:https://docs.npmjs.com/getting-started/fixing-npm-permissions
+
+
+
+<!-- 
+Add self-update 
+* [go-update](https://github.com/tj/go-update)
+* [go-update](https://github.com/inconshreveable/go-update)
+* [s3update](https://github.com/heetch/s3update): Related article [here](https://medium.com/inside-heetch/self-updating-tools-in-go-lang-9c07291d6285)
+-->
