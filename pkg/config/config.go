@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"goliatone/go-envset/pkg/envset"
 	"time"
 
@@ -34,8 +33,6 @@ func Load(name string) (*Config, error) {
 	if err != nil {
 		return &Config{}, err
 	}
-
-	fmt.Printf("rc: %s\n", filename)
 
 	cfg, err := ini.ShadowLoad(filename, config)
 	if err != nil {
