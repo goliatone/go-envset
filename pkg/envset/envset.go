@@ -91,7 +91,12 @@ func Print(environment, name string, isolated bool) error {
 	}
 
 	for _, k := range sec.KeyStrings() {
-		fmt.Printf("%s=%s\n", k, sec.Key(k).String())
+		value := sec.Key(k).String()
+		//if value has spaces then wrap in ""
+		if strings.Contains(value, " ") {
+			value = fmt.Sprintf("\"%s\"", value)
+		}
+		fmt.Printf("%s=%s\n", k, value)
 	}
 
 	return nil
