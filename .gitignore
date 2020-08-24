@@ -85,6 +85,4 @@ _testmain.go
 *.test
 *.prof
 
-
-envset
 .envset
