@@ -59,7 +59,7 @@ func Run(environment, name, cmd string, args []string, isolated bool) error {
 
 	//Once we have resolved all ${VAR}/$(command) we build cmd.Env value
 	for k, v := range context {
-		vars = append(vars, fmt.Sprintf("%s=%s\n", k, v))
+		vars = append(vars, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	//Replace ${VAR} in the executable cmd arguments
@@ -155,6 +155,7 @@ func interpolateCmds(str string, vars map[string]string) (string, error) {
 
 		//replace $() with value
 		out := string(res)
+		out = strings.TrimSuffix(out, "\n")
 		re := regexp.MustCompile(regexp.QuoteMeta(match))
 		str = re.ReplaceAllString(str, out)
 	}
