@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"text/template"
@@ -35,15 +36,37 @@ func Run(environment, name, cmd string, args []string, isolated bool) error {
 	vars := make([]string, 0)
 	context := map[string]string{}
 
+	//Build context object from section key/values
 	for _, k := range sec.KeyStrings() {
 		context[k] = sec.Key(k).String()
-		vars = append(vars, fmt.Sprintf("%s=%s\n", k, sec.Key(k).String()))
 	}
 
-	//Replace ${VAR} in arguments
+	//Replace ${VAR} and $(command) in values
+	for k, v := range context {
+		res := interpolateVars(v, context)
+		res, err = interpolateCmds(res, context)
+		if err != nil {
+			return ErrorRunningCommand{err, "error running command"}
+		}
+
+		//try using built in shell variables
+		if isolated == false {
+			res = os.ExpandEnv(res)
+		}
+
+		context[k] = res
+	}
+
+	//Once we have resolved all ${VAR}/$(command) we build cmd.Env value
+	for k, v := range context {
+		vars = append(vars, fmt.Sprintf("%s=%s\n", k, v))
+	}
+
+	//Replace ${VAR} in the executable cmd arguments
 	for i, arg := range args {
 		//we use custom interpolation string for variables we load
-		args[i] = interpolate(arg, context)
+		args[i] = interpolateVars(arg, context)
+
 		//try using built in OS variables
 		if isolated == false {
 			args[i] = os.ExpandEnv(args[i])
@@ -66,6 +89,8 @@ func Run(environment, name, cmd string, args []string, isolated bool) error {
 }
 
 //Print will show the current environment
+//We dont need to do variable replacement if we print since
+//the idea is to use it as a source
 func Print(environment, name string, isolated bool) error {
 	filename, err := FileFinder(name, 2)
 	if err != nil {
@@ -102,7 +127,42 @@ func Print(environment, name string, isolated bool) error {
 	return nil
 }
 
-func interpolate(str string, vars map[string]string) string {
+func interpolateCmds(str string, vars map[string]string) (string, error) {
+	//check if str has something that looks like a command $(.*+)
+	re, err := regexp.Compile(`\$\(.*\)`)
+	if err != nil {
+		return "", err
+	}
+
+	matches := re.FindAllString(str, -1)
+
+	if len(matches) == 0 {
+		return str, nil
+	}
+
+	//execute command:
+	for _, match := range matches {
+		//Get the actual $(command)
+		command := strings.Replace(match, ")", "", -1)
+		command = strings.Replace(command, "$(", "", -1)
+
+		//Some commands might have arguments: $(hostname -f)
+		args := strings.Split(command, " ")
+		res, err := exec.Command(args[0], args[1:]...).Output()
+		if err != nil {
+			return "", err
+		}
+
+		//replace $() with value
+		out := string(res)
+		re := regexp.MustCompile(regexp.QuoteMeta(match))
+		str = re.ReplaceAllString(str, out)
+	}
+
+	return str, nil
+}
+
+func interpolateVars(str string, vars map[string]string) string {
 	s := strings.Replace(str, "${", "${.", -1)
 	t, err := template.New(str).Option("missingkey=error").Delims("${", "}").Parse(s)
 	if err != nil {
