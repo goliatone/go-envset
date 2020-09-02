@@ -1,6 +1,6 @@
 # envset
 
-`envset` runs another program with a custom environment according to values defined in a **.envset** config file, which follows the [ini][ini] file format. You can share this file between team members.
+`envset` runs another program with a custom environment according to values defined in a **.envset** config file, which follows the [ini][ini] file format.
 
 Inspired by [daemontools][dtools]' tool [envdir][envdir].
 
@@ -8,19 +8,20 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir].
 
 ## Environment level configuration
 
-Application configuration usually is environment specific and changes between build distributions.
+Application configuration usually is environment specific and will change between build distributions.
 
-If you follow the [12 factor app][12factor] guidelines, then you know you should store your configuration in the environment.
+If you follow the [12 factor app][12factor] guidelines, then you store part of your application configuration in the environment.
 
-By application configuration we mean small and oftentimes sensitive data such as API keys, database credentials. Not all environment configuration is sensitive and are instead build distribution specific values such as the application's TCP port, base URL to build OAuth callbacks, or logging verbosity.
+By application configuration we mean small and oftentimes sensitive data such as API keys, database credentials. Not all environment configuration is sensitive and are instead build distribution specific values such as the application's base URL to build OAuth callbacks, logging verbosity or anything that is changes between development and production.
 
-`envset` helps you manage and set environment variables for multiple build distributions and [share environment variables][vcn] between team members.
+`envset` helps you manage and set environment variables for multiple build distributions.
 
 Is as simple as calling:
 
 ```
 envset development -- node server.js
 ```
+
 
 ## Examples
 
@@ -75,6 +76,7 @@ $ envset
 ## Documentation
 
 ### Commands
+
 If you type `envset` without arguments it will display help and a list of supported environment names.
 
 ## .envset file
@@ -103,6 +105,7 @@ Follows `rc` [standards][rcstand].
 
 
 ### Post and pre installation hooks
+
 The `package.json` file includes two installation live cycle scripts:
 
 
