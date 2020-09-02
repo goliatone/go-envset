@@ -1,0 +1,104 @@
+#!/bin/bash
+
+
+BINNAME="envset"
+VERSION_FILE="./.version"
+PROJECT="$(awk 'match($0, /module (.*)/) {print substr($2, RSTART, RLENGTH)}' go.mod)"
+ENTRYPOINT="cmd/envset/main.go"
+# If we have a .taskenv file load it as source
+# we can override the previous set of variables
+if [ -f .taskenv ]; then
+    source .taskenv
+fi
+
+#This will make all scripts available in the ./src/bin directory
+PATH=./src/bin:$PATH
+
+##########################################
+# Build
+##########################################
+
+# install binary and service on host machine
+# We can pass an env file with values that will
+# be available for the running service.
+# 
+# @arg 1 {string} [tag=0.0.1]
+function release:build {
+    echo ""
+    echo "running release:build..."
+    
+    GIT_TAG=$(git tag | grep ^v | sort -V | tail -n 1)
+    VERSION=$(version:upsert $1)
+    BUILD_DATE=`date -u +%Y%m%d.%H%M%S`
+    RELBIN="./bin/darwin"
+
+    mkdir -p ${RELBIN}
+
+    LDFLAGS="-X '${PROJECT}/pkg/version.BuildVersion=${VERSION}' -X '${PROJECT}/pkg/version.BuildTime=${BUILD_DATE}' -X '${PROJECT}/pkg/version.BuildUser=$(id -u -n)'"
+    
+    echo "go build -ldflags ${LDFLAGS}"
+
+    go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
+}
+
+##########################################
+# Manage version
+##########################################
+
+# Save version to meta file.
+# First time will create file if not present
+#
+# @arg 1 {string} [tag=0.0.1]
+function version:upsert {
+    local tag=${1}
+
+    if [ -z "$tag" ]; then 
+        echo $(version:get)
+    else 
+        version:set $tag
+        echo $(version:get)
+    fi
+}
+
+function version:get {
+    
+    test -f ${VERSION_FILE} || touch ${VERSION_FILE}
+
+    local tag=$(cat ${VERSION_FILE})
+
+    if [ -z "$tag" ]; then 
+        tag="0.0.1"
+        version:set $tag
+    fi
+
+    echo -n $tag
+}
+
+function version:set {
+    local tag=${1}
+    if [ -z "$tag" ]; then 
+        exit 1
+    fi
+
+    echo -e "$tag\n" > "${VERSION_FILE}"
+}
+
+##########################################
+# Help
+##########################################
+
+function help {
+    echo ""
+    echo "$0 <task> [...arguments]"
+    echo ""
+    echo "Project: ${PROJECT}"
+    echo ""
+    echo "Tasks:"
+    compgen -A function | grep -v '^_' | cat -n
+    echo ""
+}
+
+TIMEFORMAT="Task completed in %3lR"
+time ${@:-help}
+
+awk 'match($0, /^module\s+(.*)\n/) {print substr($0, RSTART, RLENGTH)}' go.mod
