@@ -70,6 +70,17 @@ func (e EnvMap) Expand(osExpand bool) error {
 	return nil
 }
 
+//GetMissingKeys will return a list of missing keys
+func (e EnvMap) GetMissingKeys(keys []string) []string {
+	missing := make([]string, len(keys))
+	for i, k := range keys {
+		if v := e[k]; v == "" {
+			missing[i] = k
+		}
+	}
+	return missing
+}
+
 //ToExpandedKVStrings returns an expanded list of key=value strings
 func (e EnvMap) ToExpandedKVStrings(osExpand bool) []string {
 	vars := e.ToKVStrings()

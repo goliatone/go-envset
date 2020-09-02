@@ -12,7 +12,7 @@ import (
 )
 
 //Run will run the given command after loading the environment
-func Run(environment, name, cmd string, args []string, isolated, expand bool) error {
+func Run(environment, name, cmd string, args []string, isolated, expand bool, required []string) error {
 	filename, err := FileFinder(name, 2)
 	if err != nil {
 		return err
@@ -42,12 +42,21 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool) er
 	//Once we have resolved all ${VAR}/$(command) we build cmd.Env value
 	vars := context.ToKVStrings()
 
-	//Replace ${VAR} in the executable cmd arguments
+	//Replace '${VAR}' in the executable cmd arguments
+	//note that if these are not in single quited they will
+	//be resolved by the shell when we call envset and we will
+	//read the the result of that replacement, even if is empty.
 	InterpolateKVStrings(args, context, expand)
 
 	command := exec.Command(cmd, args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+
+	//If we want to check for required variables do it now.
+	missing := context.GetMissingKeys(required)
+	if missing != nil {
+		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
+	}
 
 	//If we want to run in an isolated context we just use
 	//our variables from the loaded file
@@ -83,8 +92,6 @@ func Print(environment, name string, isolated, expand bool) error {
 	if err != nil {
 		return envSectionErrorNotFound{err, "section not found"}
 	}
-
-	context := map[string]string{}
 
 	//Build context object from section key/values
 	context := LoadIniSection(sec)
