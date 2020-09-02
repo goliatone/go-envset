@@ -23,7 +23,7 @@ func main() {
 	app := &cli.App{
 		Name:     "envset",
 		Version:  version.BuildVersion,
-		Compiled: time.Time(),
+		Compiled: time.Now(),
 		Authors: []*cli.Author{
 			&cli.Author{
 				Name:  "Goliat One",
@@ -44,12 +44,17 @@ func main() {
 			Usage:       fmt.Sprintf("load \"%s\" environment in current shell session", env),
 			UsageText:   fmt.Sprintf("envset %s [options] -- [command] [arguments...]", env),
 			Description: "This will load the environment and execute the provided command",
-			ArgsUsage:   "[arrgh]",
-			Category:    "ENVIRONMENTS",
+			// ArgsUsage:   "[arrgh]",
+			Category: "ENVIRONMENTS",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "isolated",
 					Usage: "if true we run shell with only variables defined",
+					Value: true, //call with --isolated=false to show all
+				},
+				&cli.BoolFlag{
+					Name:  "expand",
+					Usage: "if true we use expand environment variables",
 					Value: true, //call with --isolated=false to show all
 				},
 				&cli.StringFlag{
@@ -59,6 +64,7 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
+				expand := c.Bool("expand")
 				isolated := c.Bool("isolated")
 				//TODO: we want to support .env.local => [local]
 				filename := c.String("env-file")
@@ -68,13 +74,13 @@ func main() {
 					//we can do: eval `envset development`
 					//we can do: envset development > /tmp/env1 | source
 					//https://stackoverflow.com/questions/36074851/persist-the-value-set-for-an-env-variable-on-the-shell-after-the-go-program-exit
-					return envset.Print(env, filename, isolated)
+					return envset.Print(env, filename, isolated, expand)
 				}
 
 				cmd := c.Args().First()
 				arg := c.Args().Slice()[1:]
 
-				return envset.Run(env, filename, cmd, arg, isolated)
+				return envset.Run(env, filename, cmd, arg, isolated, expand)
 			},
 		})
 	}
@@ -126,24 +132,31 @@ func main() {
 			Usage: "if true we run shell with only variables defined",
 			Value: true, //call with --isolated=false to show all
 		},
+		&cli.BoolFlag{
+			Name:  "expand",
+			Usage: "if true we expand environment variables defined",
+			Value: true, //call with --isolated=false to show all
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
+		expand := c.Bool("expand")
 		filename := c.String("env-file")
 		isolated := c.Bool("isolated")
+
 		if filename == "" {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
 		env := "DEFAULT"
 		if c.NArg() == 0 {
-			return envset.Print(env, filename, isolated)
+			return envset.Print(env, filename, isolated, expand)
 		}
 
 		cmd := c.Args().First()
 		arg := c.Args().Slice()[1:]
 
-		return envset.Run(env, filename, cmd, arg, isolated)
+		return envset.Run(env, filename, cmd, arg, isolated, expand)
 	}
 
 	err := app.Run(os.Args)
