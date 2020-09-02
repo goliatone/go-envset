@@ -74,13 +74,16 @@ func main() {
 					//we can do: eval `envset development`
 					//we can do: envset development > /tmp/env1 | source
 					//https://stackoverflow.com/questions/36074851/persist-the-value-set-for-an-env-variable-on-the-shell-after-the-go-program-exit
+					//TODO: Pass required so we show missing ones?
 					return envset.Print(env, filename, isolated, expand)
 				}
 
 				cmd := c.Args().First()
 				arg := c.Args().Slice()[1:]
 
-				return envset.Run(env, filename, cmd, arg, isolated, expand)
+				//TODO: Get from config or from --required BOOM
+				required := []string{"BOOOOOM"}
+				return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 			},
 		})
 	}
@@ -156,7 +159,8 @@ func main() {
 		cmd := c.Args().First()
 		arg := c.Args().Slice()[1:]
 
-		return envset.Run(env, filename, cmd, arg, isolated, expand)
+		required := []string{}
+		return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 	}
 
 	err := app.Run(os.Args)
