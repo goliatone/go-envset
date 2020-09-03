@@ -10,7 +10,7 @@ import (
 //DocumentTemplate will create or update a document template
 func DocumentTemplate(name, template string, overwrite, print bool) error {
 
-	filename, err := FileFinder(name, 2)
+	filename, err := FileFinder(name)
 	if err != nil {
 		return err
 	}
