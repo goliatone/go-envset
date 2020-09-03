@@ -94,6 +94,8 @@ func main() {
 	}
 
 	app.Commands = append(app.Commands, &cli.Command{
+		//TODO: This actually should load a template file and resolve it using the context.
+		//Default template should generate envset.example
 		Name:        "template",
 		Usage:       "make a template file from an environment",
 		Description: "create a new template or update file to document the variables in your environment",
