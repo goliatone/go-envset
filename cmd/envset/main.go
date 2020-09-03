@@ -62,6 +62,11 @@ func main() {
 					Usage: "file name with environment definition",
 					Value: ".envset",
 				},
+				&cli.StringSliceFlag{
+					Name:    "required",
+					Aliases: []string{"R"},
+					Usage:   "list of key names that are required to run",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				expand := c.Bool("expand")
@@ -81,8 +86,8 @@ func main() {
 				cmd := c.Args().First()
 				arg := c.Args().Slice()[1:]
 
-				//TODO: Get from config or from --required BOOM
-				required := []string{"BOOOOOM"}
+				//TODO: Get from config
+				required := c.StringSlice("required")
 				return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 			},
 		})
@@ -94,7 +99,7 @@ func main() {
 		Description: "create a new template or update file to document the variables in your environment",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "print", Usage: "only print the contents to stdout, don't write file"},
-			&cli.StringFlag{Name: "filename", Usage: "template file name", Value: "envset.tpl"},
+			&cli.StringFlag{Name: "filename", Usage: "template file name", Value: "envset.example"},
 			&cli.StringFlag{Name: "filepath", Usage: "template file path", Value: "."},
 			&cli.StringFlag{Name: "env-file", Value: ".envset", Usage: "load environment from `FILE`"},
 			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite template, this will delete any changes"},
@@ -140,6 +145,11 @@ func main() {
 			Usage: "if true we expand environment variables defined",
 			Value: true, //call with --isolated=false to show all
 		},
+		&cli.StringSliceFlag{
+			Name:    "required",
+			Aliases: []string{"R"},
+			Usage:   "list of key names that are required to run",
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
@@ -159,7 +169,7 @@ func main() {
 		cmd := c.Args().First()
 		arg := c.Args().Slice()[1:]
 
-		required := []string{}
+		required := c.StringSlice("required")
 		return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 	}
 
