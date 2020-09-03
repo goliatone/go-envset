@@ -28,9 +28,32 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 		return envFileErrorNotFound{err, "file not found"}
 	}
 
+	//check to see if we have this section at all
+	names := env.SectionStrings()
+	if sort.SearchStrings(names, environment) == len(names) {
+		return envFileErrorNotFound{err, "section not found"}
+	}
+
 	sec, err := env.GetSection(environment)
 	if err != nil {
 		return envSectionErrorNotFound{err, "section not found"}
+	}
+
+	//we don't have any values here. Is that what the user
+	//wants?
+	if len(sec.KeyStrings()) == 0 && isolated {
+		if environment == DefaultSection {
+			//running in DEFAULT but loaded an env file without a section name
+			fmt.Println("we have a the follow sections but not what you want")
+			for _, n := range names {
+				if n == DefaultSection {
+					continue
+				}
+				fmt.Printf("- %s\n", n)
+			}
+		}
+
+		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
 	}
 
 	//Build context object from section key/values
@@ -93,7 +116,6 @@ func Print(environment, name string, isolated, expand bool) error {
 	env, err := ini.Load(filename)
 
 	if err != nil {
-		fmt.Println("file not found")
 		return envFileErrorNotFound{err, "file not found"}
 	}
 
@@ -124,8 +146,6 @@ func Print(environment, name string, isolated, expand bool) error {
 
 		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
 	}
-
-	fmt.Printf("keys %d section strings", len(sec.KeyStrings()), sec.KeyStrings())
 
 	//Build context object from section key/values
 	context := LoadIniSection(sec)
