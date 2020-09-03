@@ -13,6 +13,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+type EnvSlice []string
+
 type EnvMap map[string]string
 
 //NewEnvMap returns a new EnvMap
@@ -72,6 +74,7 @@ func (e EnvMap) Expand(osExpand bool) error {
 
 //GetMissingKeys will return a list of missing keys
 func (e EnvMap) GetMissingKeys(keys []string) []string {
+
 	missing := make([]string, len(keys))
 	for i, k := range keys {
 		if v := e[k]; v == "" {
@@ -188,4 +191,11 @@ func interpolateVars(str string, vars map[string]string) string {
 	}
 
 	return out
+}
+
+/////
+
+func (e EnvSlice) Add(k, v string) {
+	val := fmt.Sprintf("%s=%s", k, v)
+	e = append(e, val)
 }
