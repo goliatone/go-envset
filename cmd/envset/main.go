@@ -123,7 +123,7 @@ func main() {
 					return err
 				}
 			}
-
+			//TODO: This should take a a template file which we use to run against our thing
 			template = filepath.Join(dir, template)
 
 			return envset.DocumentTemplate(filename, template, overwrite, print)
@@ -134,8 +134,9 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
+			//This can be an absolute path. If a file name then we recursively look up
 			Name:  "env-file",
-			Usage: "file name with environment definition",
+			Usage: "file with environment definition",
 		},
 		&cli.BoolFlag{
 			Name:  "isolated",
@@ -163,7 +164,7 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
-		env := "DEFAULT"
+		env := envset.DefaultSection
 		if c.NArg() == 0 {
 			return envset.Print(env, filename, isolated, expand)
 		}
