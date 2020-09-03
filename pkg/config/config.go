@@ -29,7 +29,7 @@ type Config struct {
 
 //Load returns configuration object from `.envsetrc` file
 func Load(name string) (*Config, error) {
-	filename, err := envset.FileFinder(name, 2)
+	filename, err := envset.FileFinder(name)
 	if err != nil {
 		return &Config{}, err
 	}
