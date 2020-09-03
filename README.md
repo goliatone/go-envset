@@ -1,8 +1,6 @@
 # envset
 
-`envset` runs another program with a custom environment according to values defined in a **.envset** config file, which follows the [ini][ini] file format.
-
-Inspired by [daemontools][dtools]' tool [envdir][envdir].
+`envset` runs another program with a custom environment according to values defined in a configuration file with [ini][ini] file format.
 
 ---
 
@@ -10,9 +8,11 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir].
 
 Application configuration usually is environment specific and will change between build distributions.
 
-If you follow the [12 factor app][12factor] guidelines, then you store part of your application configuration in the environment.
+If you follow the [12 factor app][12factor] guidelines, then you store part of your application configuration in the environment. 
 
-By application configuration we mean small and oftentimes sensitive data such as API keys, database credentials. Not all environment configuration is sensitive and are instead build distribution specific values such as the application's base URL to build OAuth callbacks, logging verbosity or anything that is changes between development and production.
+Environment variables enable us to manage application configuration outside of our application code.
+
+By application configuration we mean small and sensitive data such as API keys, database credentials. Not all environment configuration are secrets, instead there might be build distribution specific values such as the application's base URL to build OAuth callbacks, logging verbosity or anything that is changes between development and production.
 
 `envset` helps you manage and set environment variables for multiple build distributions.
 
@@ -22,6 +22,22 @@ Is as simple as calling:
 envset development -- node server.js
 ```
 
+## Similar Tools
+
+Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dotenv](https://github.com/bkeepers/dotenv).
+
+* Distributed as a single binary
+* No dependencies in your codebase
+    * e.g. `dotenv-rails` and `dotenv`[^node-dotenv] for Node.js require you to use a library
+* Support multiple environments in a single file
+* Generates an example file with your current env vars to keep documentation updated.
+* Interpolation of variable using POSIX variable expansion.
+* Command expansion
+
+Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
+
+
+[^node-dotenv]: You an actually require the library outside of your project with the `node -r` flag.
 
 ## Examples
 
@@ -65,15 +81,30 @@ MSG=Hello World
 envset local -- env | grep MSG | say
 ```
 
-## Getting Started
+## Installation
 
-TODO: Build and install.
+TODO: List how to install in all different platforms
+
 
 ```
-$ envset
+$ brew install envset
 ```
 
 ## Documentation
+
+### Variable Expansion
+
+`envset` can interpolate variables using POSIX variable expansion in both the loaded environment file and the running command arguments. 
+
+```ini
+[development]
+CLIENT_NAME=$(whoami -f)
+CLIENT_ID=${CLIENT_NAME}.devices.local
+```
+
+```
+$ envset development -- node cli.js --user '${USER}'
+```
 
 ### Commands
 
@@ -104,45 +135,18 @@ names[]=development
 Follows `rc` [standards][rcstand].
 
 
-### Post and pre installation hooks
+### Configuration Syntax
 
-The `package.json` file includes two installation live cycle scripts:
+The loaded files need to be valid `ini` syntax.
 
-
-`postinstall`:
-
-Executed after installation of the module. It creates a default `.envsetrc` config file in the user's home directory.
-
-`postuninstall`:
-
-Executed after uninstalling the module. It removes the `.envsetrc` file created during installation.
-
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
-## Release History
-* 2015-11-02: v0.2.0: Initial **npm** release.
-* 2015-11-21: v0.3.0: Added '--' to separate command.
-* 2015-11-23: v0.4.0: Print `env` if no command provided.
-
-## TODO
-
-* Tests
-* Programmatic interface
-* Output to stdout so that we can pipe commands
+```
+```
 
 
 ## License
 Copyright (c) 2015 goliatone  
 Licensed under the MIT license.
 
-
-<!--
-const whichPromise = require('which-promise');
-
-//https://github.com/ioquatix/shell-environment/blob/master/lib/index.coffee
-ChildProcess.spawn process.env.SHELL, ['-ilc', @command + ">&3"],
--->
 
 
 [ini]: https://en.wikipedia.org/wiki/INI_file
