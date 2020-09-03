@@ -5,15 +5,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
+	"sort"
 	"strings"
 
 	"gopkg.in/ini.v1"
 )
 
+const DefaultSection = "DEFAULT"
+
 //Run will run the given command after loading the environment
 func Run(environment, name, cmd string, args []string, isolated, expand bool, required []string) error {
-	filename, err := FileFinder(name, 2)
+	//TODO: This might be an issue here!
+	filename, err := FileFinder(name)
 	if err != nil {
 		return err
 	}
@@ -81,22 +84,48 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 //We dont need to do variable replacement if we print since
 //the idea is to use it as a source
 func Print(environment, name string, isolated, expand bool) error {
-	filename, err := FileFinder(name, 2)
+	filename, err := FileFinder(name)
 	if err != nil {
 		return err
 	}
 
-	//EnvFile.Load(filename)
+	//TODO: handle other formats, e.g JSON/YML
 	env, err := ini.Load(filename)
 
 	if err != nil {
+		fmt.Println("file not found")
 		return envFileErrorNotFound{err, "file not found"}
+	}
+
+	//check to see if we have this section at all
+	names := env.SectionStrings()
+	if sort.SearchStrings(names, environment) == len(names) {
+		return envFileErrorNotFound{err, "section not found"}
 	}
 
 	sec, err := env.GetSection(environment)
 	if err != nil {
 		return envSectionErrorNotFound{err, "section not found"}
 	}
+
+	//we don't have any values here. Is that what the user
+	//wants?
+	if len(sec.KeyStrings()) == 0 && isolated {
+		if environment == DefaultSection {
+			//running in DEFAULT but loaded an env file without a section name
+			fmt.Println("we have a the follow sections but not what you want")
+			for _, n := range names {
+				if n == DefaultSection {
+					continue
+				}
+				fmt.Printf("- %s\n", n)
+			}
+		}
+
+		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
+	}
+
+	fmt.Printf("keys %d section strings", len(sec.KeyStrings()), sec.KeyStrings())
 
 	//Build context object from section key/values
 	context := LoadIniSection(sec)
@@ -114,6 +143,7 @@ func Print(environment, name string, isolated, expand bool) error {
 		}
 	}
 
+	//vars := context.GetEnvSlice()
 	for k, v := range context {
 		//TODO: do proper scaping, here we want to check if its not already been "..."
 		if strings.Contains(v, " ") {
@@ -126,9 +156,17 @@ func Print(environment, name string, isolated, expand bool) error {
 }
 
 //FileFinder will find the file and return its full path
-func FileFinder(filename string, skip int) (string, error) {
-	_, caller, _, _ := runtime.Caller(skip)
-	dirname := filepath.Dir(caller)
+func FileFinder(filename string) (string, error) {
+	if filepath.IsAbs(filename) {
+		return filename, nil
+	}
+
+	//we want to start crawling at the current directory path
+	dirname, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
 	var file string
 	for dirname != "/" {
 		file = filepath.Join(dirname, filename)
