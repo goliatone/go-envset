@@ -54,7 +54,7 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 
 	//If we want to check for required variables do it now.
 	missing := context.GetMissingKeys(required)
-	if missing != nil {
+	if len(missing) > 0 {
 		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
 	}
 
@@ -64,8 +64,13 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 		command.Env = vars
 		//we actually add our context to the os
 	} else {
+
+		local := LocalEnv()
 		for k, v := range context {
-			os.Setenv(k, v)
+			//TODO: what do we get if we have unset variables
+			if _, ok := local[k]; !ok {
+				os.Setenv(k, v)
+			}
 		}
 	}
 
