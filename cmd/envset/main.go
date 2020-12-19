@@ -92,7 +92,42 @@ func main() {
 			},
 		})
 	}
+	app.Commands = append(app.Commands, &cli.Command{
+		Name: "metadata",
+		Usage: "generate a metadata file from environment file",
+		Description: "creates a metadata file with all the given environments",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "print", Usage: "only print the contents to stdout, don't write file"},
+			&cli.StringFlag{Name: "filename", Usage: "metadata file name", Value: "metadata.json"},
+			&cli.StringFlag{Name: "filepath", Usage: "template file path", Value: "./.envmeta"},
+			&cli.StringFlag{Name: "env-file", Value: ".envset", Usage: "load environment from `FILE`"},
+			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite template, this will delete any changes"},
+			&cli.BoolFlag{Name: "hash", Usage: "only encode the hash, skip values"},
+		},
+		Action: func(c *cli.Context) error {
+			print := c.Bool("print")
+			envfile := c.String("env-file")
+			filename := c.String("filename")
+			dir := c.String("filepath")
+			overwrite := c.Bool("overwrite")
+			hash := c.Bool("hash")
 
+			dir, err := filepath.Abs(dir)
+			if err != nil {
+				return err
+			}
+
+			if _, err = os.Stat(dir); os.IsNotExist(err) {
+				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+					return err
+				}
+			}
+			//TODO: This should take a a template file which we use to run against our thing
+			filename = filepath.Join(dir, filename)
+
+			return envset.CreateMetadataFile(envfile, filename, overwrite, print, hash)
+		},
+	})
 	app.Commands = append(app.Commands, &cli.Command{
 		//TODO: This actually should load a template file and resolve it using the context.
 		//Default template should generate envset.example
