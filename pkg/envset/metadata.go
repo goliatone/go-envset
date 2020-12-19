@@ -87,19 +87,19 @@ func (e EnvFile) ToJSON() (string, error) {
     return string(b), nil
 }
 
+//MetadataOptions are the command options
 type MetadataOptions struct {
 	Name 	  string 
 	Filepath  string
 	Algorithm string
 	Project   string
-	Overwrite bool 
+	Overwrite bool
+	Globals   bool
 	Print 	  bool 
 	Values 	  bool
 }
 
 //CreateMetadataFile will create or update metadata file
-//TODO: we need to add project name, should match repo
-// func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) error {
 func CreateMetadataFile(o MetadataOptions) error {
 
 	filename, err := FileFinder(o.Name)
@@ -125,8 +125,18 @@ func CreateMetadataFile(o MetadataOptions) error {
 	}
 
 	for _, sec := range cfg.Sections() {
-		//Add section [development]
-		envSect := envFile.AddSection(sec.Name())
+		
+		secName := sec.Name()
+
+		//Check for defaults sections
+		if secName == ini.DEFAULT_SECTION {
+			if len(sec.KeyStrings()) == 0 || o.Globals == false {
+				continue
+			}
+		}
+
+		//Add section e.g. [development]
+		envSect := envFile.AddSection(secName)
 
 		if sec.Comment != "" {
 			envSect.Comment = sec.Comment
@@ -158,7 +168,6 @@ func CreateMetadataFile(o MetadataOptions) error {
 	if o.Print {
 		fmt.Print(str)
 	} else {
-		//TODO: check to see if file exists and we have o.Overwrite false
 		if _, err := os.Stat(o.Filepath); os.IsNotExist(err) {
 			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
 			if err != nil {
