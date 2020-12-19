@@ -103,7 +103,7 @@ func main() {
 			&cli.StringFlag{Name: "filepath", Usage: "template file path", Value: "./.envmeta"},
 			&cli.StringFlag{Name: "env-file", Value: ".envset", Usage: "load environment from `FILE`"},
 			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite template, this will delete any changes"},
-			&cli.BoolFlag{Name: "values", Usage: "add values in the output"},
+			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
