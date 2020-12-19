@@ -9,8 +9,14 @@ import (
 )
 //EnvFile struct
 type EnvFile struct {
-	Path      string `json:"path"`
-	File      *ini.File  `json:"-"`
+	//TODO: make relative to executable
+	Path      string     	`json:"-"`
+	File      *ini.File  	`json:"-"`
+	Filename  string     	`json:"envfile,omitempty"`
+	//TODO: should we have https, git and id? if someone checks using 
+	//https and other ssh this will change!!
+	Project   string     	`json:"project,omitempty"`
+	Alg 	  string 		`json:"algorithm"`
 	//TODO: make custom marshaller to ignore DEFAULT section
 	Sections  []*EnvSection `json:"sections"`
 }
@@ -41,8 +47,8 @@ func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
 
 //EnvKey is a single entry in our file
 type EnvKey struct {
-	Name    string `json:"name"`
-	Value   string `json:"value"`
+	Name    string `json:"key"`
+	Value   string `json:"value,omitempty"`
 	Hash    string `json:"hash"`
 	Comment string `json:"comment,omitempty"`
 }
@@ -79,10 +85,22 @@ func (e EnvFile) ToJSON() (string, error) {
     return string(b), nil
 }
 
-//CreateMetadataFile will create or update metadata file
-func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) error {
+type MetadataOptions struct {
+	Name 	  string 
+	Filepath  string
+	Algorithm string
+	Project   string
+	Overwrite bool 
+	Print 	  bool 
+	Values 	  bool
+}
 
-	filename, err := FileFinder(name)
+//CreateMetadataFile will create or update metadata file
+//TODO: we need to add project name, should match repo
+// func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) error {
+func CreateMetadataFile(o MetadataOptions) error {
+
+	filename, err := FileFinder(o.Name)
 	if err != nil {
 		return err
 	}
@@ -91,7 +109,10 @@ func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) erro
 	ini.PrettyFormat = false
 
 	envFile := EnvFile{
+		Alg: o.Algorithm,
 		Path: filename,
+		Filename: o.Name,
+		Project: o.Project,
 		Sections: make([]*EnvSection, 0),
 	}
 
@@ -113,6 +134,11 @@ func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) erro
 		for _, k := range sec.KeyStrings() {
 			v := sec.Key(k).String()
 			envKey, err := envSect.AddKey(k, v)
+			
+			if o.Values == false {
+				envKey.Value = ""
+			}
+
 			if err != nil {
 				return err
 			}
@@ -127,10 +153,11 @@ func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) erro
 		return err
 	}
 
-	if print {
+	if o.Print {
 		fmt.Print(str)
 	} else {
-		err := ioutil.WriteFile(filepath, []byte(str), 0777)
+		//TODO: check to see if file exists and we have o.Overwrite false
+		err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
 		if err != nil {
 			return err
 		}
