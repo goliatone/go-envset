@@ -11,7 +11,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-const DefaultSection = "DEFAULT"
+const DefaultSection = ini.DEFAULT_SECTION
 
 //Run will run the given command after loading the environment
 func Run(environment, name, cmd string, args []string, isolated, expand bool, required []string) error {
