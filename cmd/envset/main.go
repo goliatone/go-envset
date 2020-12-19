@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"github.com/tcnksm/go-gitconfig"
 )
 
 var cnf *config.Config
@@ -102,17 +103,23 @@ func main() {
 			&cli.StringFlag{Name: "filepath", Usage: "template file path", Value: "./.envmeta"},
 			&cli.StringFlag{Name: "env-file", Value: ".envset", Usage: "load environment from `FILE`"},
 			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite template, this will delete any changes"},
-			&cli.BoolFlag{Name: "hash", Usage: "only encode the hash, skip values"},
+			&cli.BoolFlag{Name: "values", Usage: "add values in the output"},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
 			envfile := c.String("env-file")
 			filename := c.String("filename")
-			dir := c.String("filepath")
+			originalDir := c.String("filepath")
 			overwrite := c.Bool("overwrite")
-			hash := c.Bool("hash")
+			values := c.Bool("values")
 
-			dir, err := filepath.Abs(dir)
+			//TODO: Handle case repo does not have a remote!
+			projectUrl, err := gitconfig.OriginURL()
+			if err != nil {
+				return err
+			}
+
+			dir, err := filepath.Abs(originalDir)
 			if err != nil {
 				return err
 			}
@@ -125,7 +132,17 @@ func main() {
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
-			return envset.CreateMetadataFile(envfile, filename, overwrite, print, hash)
+			o := envset.MetadataOptions{
+				Name: envfile,
+				Filepath: filename, 
+				Algorithm: "md5",
+				Project: projectUrl,
+				Overwrite: overwrite, 
+				Print: print, 
+				Values: values,
+			}
+
+			return envset.CreateMetadataFile(o)
 		},
 	})
 	app.Commands = append(app.Commands, &cli.Command{
