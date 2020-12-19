@@ -104,6 +104,7 @@ func main() {
 			&cli.StringFlag{Name: "env-file", Value: ".envset", Usage: "load environment from `FILE`"},
 			&cli.BoolFlag{Name: "overwrite", Usage: "set true to prevent overwrite metadata file", Value: true},
 			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
+			&cli.BoolFlag{Name: "globals", Usage: "include global section", Value: false},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
@@ -112,6 +113,7 @@ func main() {
 			originalDir := c.String("filepath")
 			overwrite := c.Bool("overwrite")
 			values := c.Bool("values")
+			globals := c.Bool("globals")
 
 			//TODO: Handle case repo does not have a remote!
 			projectUrl, err := gitconfig.OriginURL()
@@ -137,6 +139,7 @@ func main() {
 				Filepath: filename, 
 				Algorithm: "md5",
 				Project: projectUrl,
+				Globals: globals,
 				Overwrite: overwrite, 
 				Print: print, 
 				Values: values,
