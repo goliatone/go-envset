@@ -140,6 +140,7 @@ func main() {
 				Algorithm: "md5",
 				Project: projectUrl,
 				Globals: globals,
+				GlobalSection: "globals", //TODO: make flag
 				Overwrite: overwrite, 
 				Print: print, 
 				Values: values,
