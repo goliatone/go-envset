@@ -11,29 +11,32 @@ import (
 type EnvFile struct {
 	Path      string `json:"path"`
 	File      *ini.File  `json:"-"`
+	//TODO: make custom marshaller to ignore DEFAULT section
 	Sections  []*EnvSection `json:"sections"`
 }
 
 //EnvSection is a top level section
 type EnvSection struct {
-	Name    string   `json:"name"`
-	// Comment string   `json:"comment"`
+	Name    string    `json:"name"`
+	Comment string    `json:"comment,omitempty"`
 	Keys    []*EnvKey `json:"values"`
 }
 
-func (e *EnvSection) AddKey(key, value string) error {
+func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
 	hash, err := md5HashValue(value)
 	if err != nil {
-		return err
+		return &EnvKey{}, err
 	}
 	
-	e.Keys = append(e.Keys, &EnvKey{
+	envKey := &EnvKey{
 		Name: key, 
 		Value: value, 
 		Hash: hash,
-	})
+	}
 
-	return nil
+	e.Keys = append(e.Keys, envKey)
+
+	return envKey, nil
 }
 
 //EnvKey is a single entry in our file
@@ -41,6 +44,7 @@ type EnvKey struct {
 	Name    string `json:"name"`
 	Value   string `json:"value"`
 	Hash    string `json:"hash"`
+	Comment string `json:"comment,omitempty"`
 }
 
 //Load will load the ini file
@@ -101,10 +105,20 @@ func CreateMetadataFile(name, filepath string, overwrite, print, hash bool) erro
 		//Add section [development]
 		envSect := envFile.AddSection(sec.Name())
 
+		if sec.Comment != "" {
+			envSect.Comment = sec.Comment
+		}
+
 		//Go over section and add new EnvKeys
 		for _, k := range sec.KeyStrings() {
 			v := sec.Key(k).String()
-			envSect.AddKey(k, v)
+			envKey, err := envSect.AddKey(k, v)
+			if err != nil {
+				return err
+			}
+			if sec.Key(k).Comment != "" {
+				envKey.Comment = sec.Key(k).Comment
+			}
 		}
 	}
 
