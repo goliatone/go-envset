@@ -7,7 +7,9 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-//DocumentTemplate will create or update a document template
+//DocumentTemplate will create or update a document template 
+//e.g. envset.tpl that we use to document and to check in our repo
+//so we can keep track of the variables and sections.
 func DocumentTemplate(name, template string, overwrite, print bool) error {
 
 	filename, err := FileFinder(name)
