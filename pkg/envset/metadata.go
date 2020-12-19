@@ -89,14 +89,15 @@ func (e EnvFile) ToJSON() (string, error) {
 
 //MetadataOptions are the command options
 type MetadataOptions struct {
-	Name 	  string 
-	Filepath  string
-	Algorithm string
-	Project   string
-	Overwrite bool
-	Globals   bool
-	Print 	  bool 
-	Values 	  bool
+	Name 	  	  string 
+	Filepath  	  string
+	Algorithm 	  string
+	Project   	  string
+	GlobalSection string
+	Overwrite 	  bool
+	Globals   	  bool
+	Print 	  	  bool 
+	Values 	  	  bool
 }
 
 //CreateMetadataFile will create or update metadata file
