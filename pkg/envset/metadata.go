@@ -3,8 +3,10 @@ package envset
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"crypto/md5"
+	"io/ioutil"
+	"os"
+
 	"gopkg.in/ini.v1"
 )
 //EnvFile struct
@@ -157,9 +159,16 @@ func CreateMetadataFile(o MetadataOptions) error {
 		fmt.Print(str)
 	} else {
 		//TODO: check to see if file exists and we have o.Overwrite false
-		err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
-		if err != nil {
-			return err
+		if _, err := os.Stat(o.Filepath); os.IsNotExist(err) {
+			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+			if err != nil {
+				return err
+			}
+		} else if o.Overwrite == true {
+			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
