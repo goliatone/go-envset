@@ -1,6 +1,6 @@
-//TODO: This package should be build rather han version, so we can Tag -> Version
 package version
 
+//TODO: This package should be build rather han version, so we can Tag -> Version
 var (
 	Tag 	string = ""
 	Time    string = ""
