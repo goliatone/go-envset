@@ -1,26 +1,30 @@
 # envset
 
-`envset` runs another program with a custom environment according to values defined in a configuration file with [ini][ini] file format.
+`envset` run commands in an environment defined using a [ini][ini] configuration file.
 
 ---
 
 ## Environment level configuration
 
-Application configuration usually is environment specific and will change between build distributions.
+Application configuration is (usually) specific to an environment and will change between different build environments- e.g. app secrets for a staging environment are different than your production secrets.
 
-If you follow the [12 factor app][12factor] guidelines, then you store part of your application configuration in the environment. 
+The [12 factor app][12factor] guidelines suggest you store your application's configuration in the environment.
 
 Environment variables enable us to manage application configuration outside of our application code.
 
-By application configuration we mean small and sensitive data such as API keys, database credentials. Not all environment configuration are secrets, instead there might be build distribution specific values such as the application's base URL to build OAuth callbacks, logging verbosity or anything that is changes between development and production.
+Application configuration here mean small and sensitive data such as API keys or tokens, database credentials, etc. Not all environment configuration are secrets, there might be build distribution specific values such as the application's base URL to build OAuth callbacks, a dependent service endpoint or anything that changes between development and production.
 
-`envset` helps you manage and set environment variables for multiple build distributions.
+`envset` helps you manage environment variables for multiple build distributions.
 
 Is as simple as calling:
 
 ```
 envset development -- node server.js
 ```
+
+This will load the variables defined in the `[development]` header of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
+
+See the [examples][#examples] section for more details.
 
 ## Similar Tools
 
@@ -66,7 +70,7 @@ NODE_POSTGRES_USER=postgres
 ```
 
 
-To use it, simply prefix the call to your program with `envset` and the name of the environment:
+To use it, simply prefix the call to your program with `envset` and the name of the environment header:
 
 ```
 $ envset development -- node app.js
