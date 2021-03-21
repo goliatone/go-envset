@@ -98,6 +98,8 @@ $ brew install envset
 
 ## Documentation
 
+https://github.com/clok/cdocs
+
 ### Variable Expansion
 
 `envset` can interpolate variables using POSIX variable expansion in both the loaded environment file and the running command arguments. 

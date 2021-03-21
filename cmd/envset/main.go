@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"goliatone/go-envset/pkg/config"
 	"goliatone/go-envset/pkg/envset"
-	"goliatone/go-envset/pkg/version"
+	build "goliatone/go-envset/pkg/version"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,9 +21,14 @@ func init() {
 }
 
 func main() {
+	run(os.Args)
+}
+
+func run(args []string) {
+
 	app := &cli.App{
 		Name:     "envset",
-		Version:  version.BuildVersion,
+		Version:  build.Tag,
 		Compiled: time.Now(),
 		Authors: []*cli.Author{
 			&cli.Author{
@@ -232,7 +237,7 @@ func main() {
 		return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(args)
 	if err != nil {
 		log.Fatal(err)
 	}
