@@ -29,12 +29,12 @@ function release:build {
     
     GIT_TAG=$(git tag | grep ^v | sort -V | tail -n 1)
     VERSION=$(version:upsert $1)
-    BUILD_DATE=`date -u +%Y%m%d.%H%M%S`
+    BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
     RELBIN="./bin/darwin"
 
     mkdir -p ${RELBIN}
 
-    LDFLAGS="-X '${PROJECT}/pkg/version.BuildVersion=${VERSION}' -X '${PROJECT}/pkg/version.BuildTime=${BUILD_DATE}' -X '${PROJECT}/pkg/version.BuildUser=$(id -u -n)'"
+    LDFLAGS="-X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
     
     echo "go build -ldflags ${LDFLAGS}"
 
