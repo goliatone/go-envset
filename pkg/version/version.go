@@ -1,12 +1,14 @@
+//TODO: This package should be build rather han version, so we can Tag -> Version
 package version
 
 var (
-	BuildVersion string = ""
-	BuildTime    string = ""
-	BuildUser    string = ""
+	Tag 	string = ""
+	Time    string = ""
+	User    string = ""
+	Commit  string = ""
 )
 
 //GetVersion returns version string
 func GetVersion() string {
-	return BuildVersion + "-" + BuildTime + ":" + BuildUser
+	return Tag + "-" + Time + ":" + User
 }
