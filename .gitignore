@@ -85,4 +85,11 @@ _testmain.go
 *.test
 *.prof
 
+.tmp
+.env 
 .envset
+.envmeta
+
+.vscode
+envset.code-workspace
+TODO.md
