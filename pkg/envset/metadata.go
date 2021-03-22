@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/ini.v1"
 )
+
 //EnvFile struct
 type EnvFile struct {
 	//TODO: make relative to executable
@@ -30,6 +31,7 @@ type EnvSection struct {
 	Keys    []*EnvKey `json:"values"`
 }
 
+//AddKey adds a new key to the section
 func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
 	hash, err := md5HashValue(value)
 	if err != nil {

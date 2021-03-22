@@ -11,6 +11,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+//DefaultSection is the name of the default ini section
 const DefaultSection = ini.DEFAULT_SECTION
 
 //Run will run the given command after loading the environment
@@ -44,7 +45,7 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 	if len(sec.KeyStrings()) == 0 && isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
-			fmt.Println("we have a the follow sections but not what you want")
+			// fmt.Println("we have a the follow sections but not what you want")
 			for _, n := range names {
 				if n == DefaultSection {
 					continue
@@ -104,7 +105,7 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 }
 
 //Print will show the current environment
-//We dont need to do variable replacement if we print since
+//We don't need to do variable replacement if we print since
 //the idea is to use it as a source
 func Print(environment, name string, isolated, expand bool) error {
 	filename, err := FileFinder(name)
@@ -135,7 +136,6 @@ func Print(environment, name string, isolated, expand bool) error {
 	if len(sec.KeyStrings()) == 0 && isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
-			fmt.Println("we have a the follow sections but not what you want")
 			for _, n := range names {
 				if n == DefaultSection {
 					continue
