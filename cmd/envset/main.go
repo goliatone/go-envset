@@ -26,6 +26,12 @@ func main() {
 
 func run(args []string) {
 
+	cli.VersionFlag = &cli.BoolFlag{
+		Name: "version",
+		Aliases: []string{"V"},
+		Usage: "print the application version",
+	}
+
 	app := &cli.App{
 		Name:     "envset",
 		Version:  build.Tag,
@@ -121,7 +127,7 @@ func run(args []string) {
 			globals := c.Bool("globals")
 
 			//TODO: Handle case repo does not have a remote!
-			projectUrl, err := gitconfig.OriginURL()
+			projectURL, err := gitconfig.OriginURL()
 			if err != nil {
 				return err
 			}
@@ -143,7 +149,7 @@ func run(args []string) {
 				Name: envfile,
 				Filepath: filename, 
 				Algorithm: "md5",
-				Project: projectUrl,
+				Project: projectURL,
 				Globals: globals,
 				GlobalSection: "globals", //TODO: make flag
 				Overwrite: overwrite, 
