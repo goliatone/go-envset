@@ -176,5 +176,3 @@ function help {
 
 TIMEFORMAT="Task completed in %3lR"
 time "${@:-help}"
-
-# awk 'match($0, /^module\s+(.*)\n/) {print substr($0, RSTART, RLENGTH)}' go.mod
