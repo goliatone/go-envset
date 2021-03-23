@@ -93,3 +93,4 @@ _testmain.go
 .vscode
 envset.code-workspace
 TODO.md
+dist/*
