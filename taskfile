@@ -5,13 +5,14 @@ BINNAME="envset"
 VERSION_FILE="./.version"
 PROJECT="$(awk 'match($0, /module (.*)/) {print substr($2, RSTART, RLENGTH)}' go.mod)"
 ENTRYPOINT="cmd/envset/main.go"
+
 # If we have a .taskenv file load it as source
 # we can override the previous set of variables
 if [ -f .taskenv ]; then
     source .taskenv
 fi
 
-#This will make all scripts available in the ./src/bin directory
+# This will make all scripts available in the ./src/bin directory
 PATH=./src/bin:$PATH
 
 ##########################################
@@ -26,16 +27,21 @@ function test:run {
 # Build
 ##########################################
 
-# install binary and service on host machine
-# We can pass an env file with values that will
-# be available for the running service.
-# 
-# @arg 1 {string} [tag=0.0.1]
+## install binary and service on host machine
+## We can pass an env file with values that will
+## be available for the running service.
+## 
+## Globals:
+##  PROJECT - $PROJECT
+##  BINNAME
+##  ENTRYPOINT
+## 
+## Arguments:
+## @arg 1 {string} [tag=0.0.1]
 function release:build {
     echo ""
     echo "running release:build..."
     
-    GIT_TAG=$(git tag | grep ^v | sort -V | tail -n 1)
     VERSION=$(version:upsert $1)
     BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
     RELBIN="./bin/darwin"
@@ -49,22 +55,32 @@ function release:build {
     go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
 }
 
+function release {
+    #TODO: Add version:bump
+    version:upsert "${1}"
+
+    git tag -a "$(version:get)" -m "${2}"
+    #This should run in CI/CD
+    # goreleaser
+}
+
 ##########################################
 # Manage version
 ##########################################
 
-# Save version to meta file.
-# First time will create file if not present
-#
-# @arg 1 {string} [tag=0.0.1]
+## Save version to meta file.
+## First time will create file if not present
+## 
+## Arguments:
+## @arg 1 {string} [tag=0.0.1]
 function version:upsert {
     local tag=${1}
 
     if [ -z "$tag" ]; then 
-        echo $(version:get)
+        version:get
     else 
-        version:set $tag
-        echo $(version:get)
+        version:set "$tag"
+        version:get
     fi
 }
 
@@ -72,23 +88,70 @@ function version:get {
     
     test -f ${VERSION_FILE} || touch ${VERSION_FILE}
 
-    local tag=$(cat ${VERSION_FILE})
+    local tag
+    tag=$(cat ${VERSION_FILE})
 
     if [ -z "$tag" ]; then 
         tag="0.0.1"
-        version:set $tag
+        version:set "$tag"
     fi
 
-    echo -n $tag
+    echo -n "$tag"
 }
 
 function version:set {
-    local tag=${1}
+    local tag
+    tag=${1}
     if [ -z "$tag" ]; then 
         exit 1
     fi
 
-    echo -e "$tag\n" > "${VERSION_FILE}"
+    echo -e "$tag" > "${VERSION_FILE}"
+}
+
+## Bump sem ver by specifying a level.
+## Valid levels are:
+## - patch (default)
+## - minor
+## - major
+## 
+## @see https://github.com/fsaintjacques/semver-tool/blob/master/src/semver
+##
+## @arg 1 {string} [level=patch]
+## Outputs:
+##   Semver string "$major.$minor.$patch"
+function version:bump {
+    # Read contents of version and store in 
+    IFS='.' read -ra identifiers < "$VERSION_FILE"
+    
+    [[ "${#identifiers[@]}" -ne 3 ]] && echo "Invalid semver string" && return 1
+    
+    #If we don't provide a second argument make patch increment 
+    [[ "$#" -eq 0 ]] && level='patch' || level=$1
+    
+    patch=${identifiers[2]}
+    minor=${identifiers[1]}
+    major=${identifiers[0]}
+
+    case $level in
+        patch)
+            patch=$((patch+1))
+        ;;
+        minor)
+            minor=$((minor+1))
+            patch=0
+        ;;
+        major)
+            major=$((major+1))
+            minor=0
+            patch=0
+        ;;
+        *)
+            echo "Invalid level passed"
+            return 2
+    esac
+
+    echo "$major.$minor.$patch"
 }
 
 ##########################################
@@ -104,9 +167,14 @@ function help {
     echo "Tasks:"
     compgen -A function | grep -v '^_' | cat -n
     echo ""
+
+    prog="$0"
+    me=$(basename "$prog")
+    
+    grep -e '^##[[:space:]]' -e '^##$' "$prog" | sed -e 's/^##//' -e "s/_PROG_/$me/" 1>&2
 }
 
 TIMEFORMAT="Task completed in %3lR"
-time ${@:-help}
+time "${@:-help}"
 
-awk 'match($0, /^module\s+(.*)\n/) {print substr($0, RSTART, RLENGTH)}' go.mod
+# awk 'match($0, /^module\s+(.*)\n/) {print substr($0, RSTART, RLENGTH)}' go.mod

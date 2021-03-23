@@ -98,7 +98,22 @@ $ brew install envset
 
 ## Documentation
 
-https://github.com/clok/cdocs
+`envset` will look for a file defining different environments and make them available as commands.
+
+```ini
+[development]
+APP_BASE_URL=https://localhost:3003
+
+[production]
+APP_BASE_URL=https://envset.sh
+```
+
+### Commands
+
+The following is a list of the available default commands:
+
+* metadata
+* template
 
 ### Variable Expansion
 
@@ -172,4 +187,7 @@ Add self-update
 * [go-update](https://github.com/tj/go-update)
 * [go-update](https://github.com/inconshreveable/go-update)
 * [s3update](https://github.com/heetch/s3update): Related article [here](https://medium.com/inside-heetch/self-updating-tools-in-go-lang-9c07291d6285)
+
+documentation extension for urfav/cli/v2
+https://github.com/clok/cdocs
 -->
