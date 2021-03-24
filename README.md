@@ -1,25 +1,49 @@
 # envset
 
-`envset` runs another program with a custom environment according to values defined in a **.envset** config file, which follows the [ini][ini] file format. You can share this file between team members.
-
-Inspired by [daemontools][dtools]' tool [envdir][envdir].
+`envset` run commands in an environment defined using a [ini][ini] configuration file.
 
 ---
 
 ## Environment level configuration
-Application configuration usually is environment specific and changes between build distributions.
 
-If you follow the [12 factor app][12factor] guidelines, then you know you should store your configuration in the environment.
+Application configuration is (usually) specific to an environment and will change between different build environments- e.g. app secrets for a staging environment are different than your production secrets.
 
-By application configuration we mean small and oftentimes sensitive data such as API keys, database credentials. Not all environment configuration is sensitive and are instead build distribution specific values such as the application's TCP port, base URL to build OAuth callbacks, or logging verbosity.
+The [12 factor app][12factor] guidelines suggest you store your application's configuration in the environment.
 
-`envset` helps you manage and set environment variables for multiple build distributions and [share environment variables][vcn] between team members.
+Environment variables enable us to manage application configuration outside of our application code.
+
+Application configuration here mean small and sensitive data such as API keys or tokens, database credentials, etc. Not all environment configuration are secrets, there might be build distribution specific values such as the application's base URL to build OAuth callbacks, a dependent service endpoint or anything that changes between development and production.
+
+`envset` helps you manage environment variables for multiple build distributions.
 
 Is as simple as calling:
 
 ```
 envset development -- node server.js
 ```
+
+This will load the variables defined in the `[development]` header of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
+
+See the [examples][#examples] section for more details.
+
+## Similar Tools
+
+Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dotenv](https://github.com/bkeepers/dotenv).
+
+* Distributed as a single binary
+* No dependencies in your codebase
+    * e.g. `dotenv-rails` and `dotenv`[^node-dotenv] for Node.js require you to use a library
+* Support multiple environments in a single file
+* Generates an example file with your current env vars to keep documentation updated.
+* Interpolation of variable using POSIX variable expansion.
+* Command expansion
+* (required) Define required variables and exit with error if not set
+* (isolated) By default the shell environment is not loaded in the context
+
+Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
+
+
+[^node-dotenv]: You an actually require the library outside of your project with the `node -r` flag.
 
 ## Examples
 
@@ -46,7 +70,7 @@ NODE_POSTGRES_USER=postgres
 ```
 
 
-To use it, simply prefix the call to your program with `envset` and the name of the environment:
+To use it, simply prefix the call to your program with `envset` and the name of the environment header:
 
 ```
 $ envset development -- node app.js
@@ -63,17 +87,50 @@ MSG=Hello World
 envset local -- env | grep MSG | say
 ```
 
-## Getting Started
+## Installation
 
-TODO: Build and install.
+TODO: List how to install in all different platforms
+
 
 ```
-$ envset
+$ brew install envset
 ```
 
 ## Documentation
 
+`envset` will look for a file defining different environments and make them available as commands.
+
+```ini
+[development]
+APP_BASE_URL=https://localhost:3003
+
+[production]
+APP_BASE_URL=https://envset.sh
+```
+
 ### Commands
+
+The following is a list of the available default commands:
+
+* metadata
+* template
+
+### Variable Expansion
+
+`envset` can interpolate variables using POSIX variable expansion in both the loaded environment file and the running command arguments. 
+
+```ini
+[development]
+CLIENT_NAME=$(whoami -f)
+CLIENT_ID=${CLIENT_NAME}.devices.local
+```
+
+```
+$ envset development -- node cli.js --user '${USER}'
+```
+
+### Commands
+
 If you type `envset` without arguments it will display help and a list of supported environment names.
 
 ## .envset file
@@ -101,44 +158,18 @@ names[]=development
 Follows `rc` [standards][rcstand].
 
 
-### Post and pre installation hooks
-The `package.json` file includes two installation live cycle scripts:
+### Configuration Syntax
 
+The loaded files need to be valid `ini` syntax.
 
-`postinstall`:
-
-Executed after installation of the module. It creates a default `.envsetrc` config file in the user's home directory.
-
-`postuninstall`:
-
-Executed after uninstalling the module. It removes the `.envsetrc` file created during installation.
-
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
-## Release History
-* 2015-11-02: v0.2.0: Initial **npm** release.
-* 2015-11-21: v0.3.0: Added '--' to separate command.
-* 2015-11-23: v0.4.0: Print `env` if no command provided.
-
-## TODO
-
-* Tests
-* Programmatic interface
-* Output to stdout so that we can pipe commands
+```
+```
 
 
 ## License
 Copyright (c) 2015 goliatone  
 Licensed under the MIT license.
 
-
-<!--
-const whichPromise = require('which-promise');
-
-//https://github.com/ioquatix/shell-environment/blob/master/lib/index.coffee
-ChildProcess.spawn process.env.SHELL, ['-ilc', @command + ">&3"],
--->
 
 
 [ini]: https://en.wikipedia.org/wiki/INI_file
@@ -148,3 +179,15 @@ ChildProcess.spawn process.env.SHELL, ['-ilc', @command + ">&3"],
 [12factor]: http://12factor.net/config
 [vcn]: https://github.com/goliatone/vcn
 [npm-fix-perm]:https://docs.npmjs.com/getting-started/fixing-npm-permissions
+
+
+
+<!-- 
+Add self-update 
+* [go-update](https://github.com/tj/go-update)
+* [go-update](https://github.com/inconshreveable/go-update)
+* [s3update](https://github.com/heetch/s3update): Related article [here](https://medium.com/inside-heetch/self-updating-tools-in-go-lang-9c07291d6285)
+
+documentation extension for urfav/cli/v2
+https://github.com/clok/cdocs
+-->

@@ -36,7 +36,8 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -84,4 +85,12 @@ _testmain.go
 *.test
 *.prof
 
+.tmp
+.env 
+.envset
+.envmeta
 
+.vscode
+envset.code-workspace
+TODO.md
+dist/*
