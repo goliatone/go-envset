@@ -12,7 +12,7 @@ The [12 factor app][12factor] guidelines suggest you store your application's co
 
 Environment variables enable us to manage application configuration outside of our application code.
 
-Application configuration here mean small and sensitive data such as API keys or tokens, database credentials, etc. Not all environment configuration are secrets, there might be build distribution specific values such as the application's base URL to build OAuth callbacks, a dependent service endpoint or anything that changes between development and production.
+Application configuration usually are small and sensitive data such as API keys or tokens, database credentials, etc. However not all environment configuration have to be secrets, there might be build distribution specific values such as the application's base URL to build OAuth callbacks, a dependent service endpoint or anything that changes between development and production environments.
 
 `envset` helps you manage environment variables for multiple build distributions.
 
@@ -24,7 +24,7 @@ envset development -- node server.js
 
 This will load the variables defined in the `[development]` header of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
 
-See the [examples][#examples] section for more details.
+See the [examples](#examples) section for more details.
 
 ## Similar Tools
 
@@ -32,7 +32,7 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dote
 
 * Distributed as a single binary
 * No dependencies in your codebase
-    * e.g. `dotenv-rails` and `dotenv`[^node-dotenv] for Node.js require you to use a library
+    * e.g. `dotenv-rails` and `dotenv`<sup>[1](#node-dotenv)</sup> for Node.js require you to use a library
 * Support multiple environments in a single file
 * Generates an example file with your current env vars to keep documentation updated.
 * Interpolation of variable using POSIX variable expansion.
@@ -43,7 +43,7 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dote
 Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
 
 
-[^node-dotenv]: You an actually require the library outside of your project with the `node -r` flag.
+<a name="myfootnote1">1</a>: You an actually require the library outside of your project with the `node -r` flag.
 
 ## Examples
 
@@ -167,7 +167,7 @@ The loaded files need to be valid `ini` syntax.
 
 
 ## License
-Copyright (c) 2015 goliatone  
+Copyright (c) 2015-2021 goliatone  
 Licensed under the MIT license.
 
 
