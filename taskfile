@@ -167,7 +167,8 @@ function ci:test {
 }
 
 function ci:clean {
-    rm "./bin/${BINNAME}"
+    rm -fr ./dist || true
+    rm -f "./bin/${BINNAME}" || true
 }
 
 ##########################################
