@@ -112,10 +112,14 @@ func Test_ToKVStrings(t *testing.T) {
 
 	result := env.ToKVStrings()
 
-	expected := []string{"TEST_KEY_1=value1", "TEST_KEY_2=value2", "TEST_KEY_3=value3"}
+	expected := map[string]bool{
+		"TEST_KEY_1=value1": true, 
+		"TEST_KEY_2=value2": true, 
+		"TEST_KEY_3=value3": true,
+	}
 	
-	for i := range expected {
-		if result[i] != expected[i] {
+	for i := range result {
+		if _, ok := expected[result[i]]; ok != true {
 			t.Error("ToKVStrings failed, unexpected error")
 		}
 	}
