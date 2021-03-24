@@ -34,6 +34,9 @@ jobs:
       - name: Run test
         run: ./taskfile ci:test
 
+      - name: Run clean
+        run: ./taskfile ci:clean
+
       - name: Run release
         uses: goreleaser/goreleaser-action@v2
         with:
