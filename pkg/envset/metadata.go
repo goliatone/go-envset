@@ -3,7 +3,10 @@ package envset
 import (
 	"encoding/json"
 	"fmt"
+	"crypto/hmac"
+    "crypto/sha256"
 	"crypto/md5"
+    "encoding/hex"
 	"io/ioutil"
 	"os"
 
@@ -190,6 +193,21 @@ func CreateMetadataFile(o MetadataOptions) error {
 func md5HashValue(value string) (string, error) {
 	hash := md5.New()
 	hash.Write([]byte(value))
-	str := fmt.Sprintf("%x", hash.Sum(nil))
-	return str, nil
+	sha := fmt.Sprintf("%x", hash.Sum(nil))
+	return sha, nil
 }
+
+func hmacSha256HashValue(value, secret string) (string, error) {
+	hash := hmac.New(sha256.New, []byte(secret))
+    hash.Write([]byte(value))
+    sha := hex.EncodeToString(hash.Sum(nil))
+	return sha, nil
+}
+
+//https://golang.org/pkg/crypto/hmac/
+// func ValidMAC(message, messageMAC, key []byte) bool {
+// 	mac := hmac.New(sha256.New, key)
+// 	mac.Write(message)
+// 	expectedMAC := mac.Sum(nil)
+// 	return hmac.Equal(messageMAC, expectedMAC)
+// }
