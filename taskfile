@@ -155,6 +155,22 @@ function version:bump {
 }
 
 ##########################################
+# CI/CD
+##########################################
+
+function ci:build {
+    go build -o "./bin/${BINNAME}" "${ENTRYPOINT}"
+}
+
+function ci:test {
+    go test ./... -v
+}
+
+function ci:clean {
+    rm "./bin/${BINNAME}"
+}
+
+##########################################
 # Help
 ##########################################
 
