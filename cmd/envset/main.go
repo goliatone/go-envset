@@ -148,7 +148,7 @@ func run(args []string) {
 			o := envset.MetadataOptions{
 				Name: envfile,
 				Filepath: filename, 
-				Algorithm: "md5",
+				Algorithm: "sha256",
 				Project: projectURL,
 				Globals: globals,
 				GlobalSection: "globals", //TODO: make flag
