@@ -36,10 +36,13 @@ type EnvSection struct {
 
 //AddKey adds a new key to the section
 func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
-	hash, err := md5HashValue(value)
+	hash, err := sha256Hashvalue(value)
+	// hash, err := hmacSha256HashValue(value, key)
 	if err != nil {
 		return &EnvKey{}, err
 	}
+
+	hash = hash[:50]
 	
 	envKey := &EnvKey{
 		Name: key, 
@@ -192,6 +195,13 @@ func CreateMetadataFile(o MetadataOptions) error {
 
 func md5HashValue(value string) (string, error) {
 	hash := md5.New()
+	hash.Write([]byte(value))
+	sha := fmt.Sprintf("%x", hash.Sum(nil))
+	return sha, nil
+}
+
+func sha256Hashvalue(value string) (string, error) {
+	hash := sha256.New()
 	hash.Write([]byte(value))
 	sha := fmt.Sprintf("%x", hash.Sum(nil))
 	return sha, nil
