@@ -104,6 +104,7 @@ func run(args []string) {
 			},
 		})
 	}
+	
 	app.Commands = append(app.Commands, &cli.Command{
 		Name: "metadata",
 		Usage: "generate a metadata file from environment file",
@@ -160,6 +161,7 @@ func run(args []string) {
 			return envset.CreateMetadataFile(o)
 		},
 	})
+	
 	app.Commands = append(app.Commands, &cli.Command{
 		//TODO: This actually should load a template file and resolve it using the context.
 		//Default template should generate envset.example
