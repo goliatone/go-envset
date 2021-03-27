@@ -35,9 +35,17 @@ type EnvSection struct {
 }
 
 //AddKey adds a new key to the section
-func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
-	hash, err := sha256Hashvalue(value)
-	// hash, err := hmacSha256HashValue(value, key)
+func (e *EnvSection) AddKey(key, value, secret string) (*EnvKey, error) {
+	var err error
+	var hash string 
+
+	//TODO: Consider removing no secret option
+	if secret == "" {
+		hash, err = sha256Hashvalue(value)
+	} else {
+		hash, err = hmacSha256HashValue(value, secret)
+	}
+
 	if err != nil {
 		return &EnvKey{}, err
 	}
@@ -106,6 +114,7 @@ type MetadataOptions struct {
 	Globals   	  bool
 	Print 	  	  bool 
 	Values 	  	  bool
+	Secret 		  string
 }
 
 //CreateMetadataFile will create or update metadata file
@@ -154,7 +163,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 		//Go over section and add new EnvKeys
 		for _, k := range sec.KeyStrings() {
 			v := sec.Key(k).String()
-			envKey, err := envSect.AddKey(k, v)
+			envKey, err := envSect.AddKey(k, v, o.Secret)
 			
 			if o.Values == false {
 				envKey.Value = ""

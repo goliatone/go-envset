@@ -152,6 +152,11 @@ func run(args []string) {
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
+			algorithm := "sha256"
+			if secret != "" {
+				algorithm = "hmac"
+			}
+
 			o := envset.MetadataOptions{
 				Name: envfile,
 				Filepath: filename, 
