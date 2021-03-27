@@ -117,6 +117,11 @@ func run(args []string) {
 			&cli.BoolFlag{Name: "overwrite", Usage: "set true to prevent overwrite metadata file", Value: true},
 			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
 			&cli.BoolFlag{Name: "globals", Usage: "include global section", Value: false},
+			&cli.StringFlag{
+				Name: "secret",
+				Usage: "secret used to encode hash values",
+		        EnvVars: []string{"ENVSET_HASH_SECRET"},
+			},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
@@ -126,6 +131,7 @@ func run(args []string) {
 			overwrite := c.Bool("overwrite")
 			values := c.Bool("values")
 			globals := c.Bool("globals")
+			secret := c.String("secret")
 
 			//TODO: Handle case repo does not have a remote!
 			projectURL, err := gitconfig.OriginURL()
@@ -156,6 +162,7 @@ func run(args []string) {
 				Overwrite: overwrite, 
 				Print: print, 
 				Values: values,
+				Secret: secret,
 			}
 
 			return envset.CreateMetadataFile(o)
