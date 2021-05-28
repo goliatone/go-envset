@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 
 BINNAME="envset"
 VERSION_FILE="./.version"
@@ -9,6 +9,7 @@ ENTRYPOINT="cmd/envset/main.go"
 # If we have a .taskenv file load it as source
 # we can override the previous set of variables
 if [ -f .taskenv ]; then
+    # shellcheck disable=SC1091
     source .taskenv
 fi
 
@@ -55,13 +56,39 @@ function release:build {
     go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
 }
 
+##
+## release
+## Bump our current version, create a git tag
+## and push to trigger our release flow.
+## 
+## Arguments:
+## @arg 1 {string} [level=patch] 
+##        Accepted major, minor, patch
 function release {
-    #TODO: Add version:bump
-    version:upsert "${1}"
+    local tag
+    local level
+    local message
 
-    git tag -a "$(version:get)" -m "${2}"
-    #This should run in CI/CD
-    # goreleaser
+    level=${1:-"patch"}
+
+    # Bump our version
+    tag=$(version:bump "${level}")
+
+    # Set message: default to New major|minor|patch release: vx.x.x
+    message=${2:-"New ${level} release: v${tag}"}
+
+    # Update version file
+    version:set "${tag}"
+
+    # Add updated version file to git
+    git add "${VERSION_FILE}"
+    git commit -m "Bump version"
+
+    # Create a new tag
+    git tag -a "v${tag}" -m "${message}"
+
+    # Push tags and trigger release 🚀 🥳
+    git push --tags
 }
 
 ##########################################
@@ -109,6 +136,8 @@ function version:set {
     echo -e "$tag" > "${VERSION_FILE}"
 }
 
+##
+## version:bump
 ## Bump sem ver by specifying a level.
 ## Valid levels are:
 ## - patch (default)

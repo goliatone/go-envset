@@ -104,6 +104,7 @@ func run(args []string) {
 			},
 		})
 	}
+	
 	app.Commands = append(app.Commands, &cli.Command{
 		Name: "metadata",
 		Usage: "generate a metadata file from environment file",
@@ -116,6 +117,11 @@ func run(args []string) {
 			&cli.BoolFlag{Name: "overwrite", Usage: "set true to prevent overwrite metadata file", Value: true},
 			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
 			&cli.BoolFlag{Name: "globals", Usage: "include global section", Value: false},
+			&cli.StringFlag{
+				Name: "secret",
+				Usage: "secret used to encode hash values",
+		        EnvVars: []string{"ENVSET_HASH_SECRET"},
+			},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
@@ -125,6 +131,7 @@ func run(args []string) {
 			overwrite := c.Bool("overwrite")
 			values := c.Bool("values")
 			globals := c.Bool("globals")
+			secret := c.String("secret")
 
 			//TODO: Handle case repo does not have a remote!
 			projectURL, err := gitconfig.OriginURL()
@@ -145,21 +152,28 @@ func run(args []string) {
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
+			algorithm := "sha256"
+			if secret != "" {
+				algorithm = "hmac"
+			}
+
 			o := envset.MetadataOptions{
 				Name: envfile,
 				Filepath: filename, 
-				Algorithm: "md5",
+				Algorithm: algorithm,
 				Project: projectURL,
 				Globals: globals,
 				GlobalSection: "globals", //TODO: make flag
 				Overwrite: overwrite, 
 				Print: print, 
 				Values: values,
+				Secret: secret,
 			}
 
 			return envset.CreateMetadataFile(o)
 		},
 	})
+	
 	app.Commands = append(app.Commands, &cli.Command{
 		//TODO: This actually should load a template file and resolve it using the context.
 		//Default template should generate envset.example

@@ -2,7 +2,7 @@ package version
 
 //TODO: This package should be build rather han version, so we can Tag -> Version
 var (
-	Tag 	string = ""
+	Tag 	string = "dev"
 	Time    string = ""
 	User    string = ""
 	Commit  string = ""
