@@ -1,4 +1,4 @@
-package envset 
+package envset
 
 import (
 	"path/filepath"

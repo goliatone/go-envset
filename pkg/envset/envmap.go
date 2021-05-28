@@ -72,7 +72,7 @@ func (e EnvMap) Expand(osExpand bool) error {
 	return nil
 }
 
-//GetMissingKeys will compare the keys present in `keys` with the keys present in 
+//GetMissingKeys will compare the keys present in `keys` with the keys present in
 //the EnvMap instance and return a list of missing keys.
 func (e EnvMap) GetMissingKeys(keys []string) []string {
 
