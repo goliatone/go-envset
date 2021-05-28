@@ -1,12 +1,12 @@
 package envset
 
 import (
+	"crypto/hmac"
+	"crypto/md5"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"crypto/hmac"
-    "crypto/sha256"
-	"crypto/md5"
-    "encoding/hex"
 	"io/ioutil"
 	"os"
 
@@ -16,15 +16,15 @@ import (
 //EnvFile struct
 type EnvFile struct {
 	//TODO: make relative to executable
-	Path      string     	`json:"-"`
-	File      *ini.File  	`json:"-"`
-	Filename  string     	`json:"envfile,omitempty"`
-	//TODO: should we have https, git and id? if someone checks using 
+	Path     string    `json:"-"`
+	File     *ini.File `json:"-"`
+	Filename string    `json:"envfile,omitempty"`
+	//TODO: should we have https, git and id? if someone checks using
 	//https and other ssh this will change!!
-	Project   string     	`json:"project,omitempty"`
-	Alg 	  string 		`json:"algorithm"`
+	Project string `json:"project,omitempty"`
+	Alg     string `json:"algorithm"`
 	//TODO: make custom marshaller to ignore DEFAULT section
-	Sections  []*EnvSection `json:"sections"`
+	Sections []*EnvSection `json:"sections"`
 }
 
 //EnvSection is a top level section
@@ -37,7 +37,7 @@ type EnvSection struct {
 //AddKey adds a new key to the section
 func (e *EnvSection) AddKey(key, value, secret string) (*EnvKey, error) {
 	var err error
-	var hash string 
+	var hash string
 
 	//TODO: Consider removing no secret option
 	if secret == "" {
@@ -51,11 +51,11 @@ func (e *EnvSection) AddKey(key, value, secret string) (*EnvKey, error) {
 	}
 
 	hash = hash[:50]
-	
+
 	envKey := &EnvKey{
-		Name: key, 
-		Value: value, 
-		Hash: hash,
+		Name:  key,
+		Value: value,
+		Hash:  hash,
 	}
 
 	e.Keys = append(e.Keys, envKey)
@@ -97,34 +97,34 @@ func (e *EnvFile) AddSection(name string) *EnvSection {
 //ToJSON will print the JSON representation for a envfile
 func (e EnvFile) ToJSON() (string, error) {
 	b, err := json.Marshal(e)
-    if err != nil {
-        return "", err
-    }
-    return string(b), nil
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 //FromJSON load from json file
-func (e *EnvFile) FromJSON(path string) (error) {
+func (e *EnvFile) FromJSON(path string) error {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
- 
+
 	return json.Unmarshal([]byte(file), &e)
 }
 
 //MetadataOptions are the command options
 type MetadataOptions struct {
-	Name 	  	  string 
-	Filepath  	  string
-	Algorithm 	  string
-	Project   	  string
+	Name          string
+	Filepath      string
+	Algorithm     string
+	Project       string
 	GlobalSection string
-	Overwrite 	  bool
-	Globals   	  bool
-	Print 	  	  bool 
-	Values 	  	  bool
-	Secret 		  string
+	Overwrite     bool
+	Globals       bool
+	Print         bool
+	Values        bool
+	Secret        string
 }
 
 //CreateMetadataFile will create or update metadata file
@@ -139,10 +139,10 @@ func CreateMetadataFile(o MetadataOptions) error {
 	ini.PrettyFormat = false
 
 	envFile := EnvFile{
-		Alg: o.Algorithm,
-		Path: filename,
+		Alg:      o.Algorithm,
+		Path:     filename,
 		Filename: o.Name,
-		Project: o.Project,
+		Project:  o.Project,
 		Sections: make([]*EnvSection, 0),
 	}
 
@@ -153,7 +153,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 	}
 
 	for _, sec := range cfg.Sections() {
-		
+
 		secName := sec.Name()
 
 		//Check for defaults sections
@@ -174,7 +174,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 		for _, k := range sec.KeyStrings() {
 			v := sec.Key(k).String()
 			envKey, err := envSect.AddKey(k, v, o.Secret)
-			
+
 			if o.Values == false {
 				envKey.Value = ""
 			}
@@ -228,8 +228,8 @@ func sha256Hashvalue(value string) (string, error) {
 
 func hmacSha256HashValue(value, secret string) (string, error) {
 	hash := hmac.New(sha256.New, []byte(secret))
-    hash.Write([]byte(value))
-    sha := hex.EncodeToString(hash.Sum(nil))
+	hash.Write([]byte(value))
+	sha := hex.EncodeToString(hash.Sum(nil))
 	return sha, nil
 }
 
