@@ -2,42 +2,39 @@ package main
 
 import (
 	"fmt"
-	"goliatone/go-envset/pkg/config"
-	"goliatone/go-envset/pkg/envset"
-	build "goliatone/go-envset/pkg/version"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/urfave/cli/v2"
+	"github.com/goliatone/go-envset/pkg/config"
+
+	"github.com/goliatone/go-envset/pkg/envset"
+
+	build "github.com/goliatone/go-envset/pkg/version"
+
 	"github.com/tcnksm/go-gitconfig"
+	"github.com/urfave/cli/v2"
 )
 
+var app *cli.App
 var cnf *config.Config
 
 func init() {
 	cnf, _ = config.Load(".envsetrc")
-}
-
-func main() {
-	run(os.Args)
-}
-
-func run(args []string) {
 
 	cli.VersionFlag = &cli.BoolFlag{
-		Name: "version",
+		Name:    "version",
 		Aliases: []string{"V"},
-		Usage: "print the application version",
+		Usage:   "print the application version",
 	}
 
-	app := &cli.App{
+	app = &cli.App{
 		Name:     "envset",
 		Version:  build.Tag,
 		Compiled: time.Now(),
 		Authors: []*cli.Author{
-			&cli.Author{
+			{
 				Name:  "Goliat One",
 				Email: "hi@goliat.one",
 			},
@@ -47,6 +44,14 @@ func run(args []string) {
 		HelpName:  "envset",
 		UsageText: "envset [environment] -- [command]\n\nEXAMPLE:\n\t envset development -- node index.js\n\t eval $(envset development --isolated=true)\n\t envset development -- say '${MY_GREETING}'",
 	}
+}
+
+func main() {
+
+	run(os.Args)
+}
+
+func run(args []string) {
 
 	subcommands := []*cli.Command{}
 
@@ -104,10 +109,10 @@ func run(args []string) {
 			},
 		})
 	}
-	
-	app.Commands = append(app.Commands, &cli.Command{
-		Name: "metadata",
-		Usage: "generate a metadata file from environment file",
+
+	appendCommand(&cli.Command{
+		Name:        "metadata",
+		Usage:       "generate a metadata file from environment file",
 		Description: "creates a metadata file with all the given environments",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "print", Usage: "only print the contents to stdout, don't write file"},
@@ -117,11 +122,7 @@ func run(args []string) {
 			&cli.BoolFlag{Name: "overwrite", Usage: "set true to prevent overwrite metadata file", Value: true},
 			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
 			&cli.BoolFlag{Name: "globals", Usage: "include global section", Value: false},
-			&cli.StringFlag{
-				Name: "secret",
-				Usage: "secret used to encode hash values",
-		        EnvVars: []string{"ENVSET_HASH_SECRET"},
-			},
+			&cli.StringFlag{Name: "secret", Usage: "secret used to encode hash values", EnvVars: []string{"ENVSET_HASH_SECRET"}},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
@@ -158,23 +159,41 @@ func run(args []string) {
 			}
 
 			o := envset.MetadataOptions{
-				Name: envfile,
-				Filepath: filename, 
-				Algorithm: algorithm,
-				Project: projectURL,
-				Globals: globals,
+				Name:          envfile,
+				Filepath:      filename,
+				Algorithm:     algorithm,
+				Project:       projectURL,
+				Globals:       globals,
 				GlobalSection: "globals", //TODO: make flag
-				Overwrite: overwrite, 
-				Print: print, 
-				Values: values,
-				Secret: secret,
+				Overwrite:     overwrite,
+				Print:         print,
+				Values:        values,
+				Secret:        secret,
 			}
 
 			return envset.CreateMetadataFile(o)
 		},
+		Subcommands: []*cli.Command{
+			{
+				Name: "compare",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "command2flag",
+						// ...
+					},
+				},
+				Action: func(c *cli.Context) error {
+					env := envset.EnvFile{}
+					env.FromJSON("./.envmeta/metadata.json")
+					str, _ := env.ToJSON()
+					fmt.Println(str)
+					return nil
+				},
+			},
+		},
 	})
-	
-	app.Commands = append(app.Commands, &cli.Command{
+
+	appendCommand(&cli.Command{
 		//TODO: This actually should load a template file and resolve it using the context.
 		//Default template should generate envset.example
 		Name:        "template",
@@ -261,4 +280,8 @@ func run(args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func appendCommand(command *cli.Command) {
+	app.Commands = append(app.Commands, command)
 }
