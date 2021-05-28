@@ -103,6 +103,16 @@ func (e EnvFile) ToJSON() (string, error) {
     return string(b), nil
 }
 
+//FromJSON load from json file
+func (e *EnvFile) FromJSON(path string) (error) {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+ 
+	return json.Unmarshal([]byte(file), &e)
+}
+
 //MetadataOptions are the command options
 type MetadataOptions struct {
 	Name 	  	  string 
