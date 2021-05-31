@@ -276,18 +276,21 @@ func CompareSections(s1, s2 EnvSection) EnvSection {
 				seen[k1.Name] = i
 				if k1.Hash != k2.Hash {
 					seen[k1.Name] = -1
+					k1.Comment = "different hash value"
 					break
 				}
 			}
 		}
 
 		if seen[k1.Name] == -1 {
+			k1.Comment = "extra in source"
 			diff.Keys = append(diff.Keys, k1)
 		}
 	}
 
 	for _, k2 := range s2.Keys {
 		if _, ok := seen[k2.Name]; ok == false {
+			k2.Comment = "missing in source"
 			diff.Keys = append(diff.Keys, k2)
 		}
 	}
