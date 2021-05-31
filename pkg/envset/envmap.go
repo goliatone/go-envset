@@ -13,8 +13,10 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+//EnvSlice type to hold envset entries
 type EnvSlice []string
 
+//EnvMap type to hold envset map
 type EnvMap map[string]string
 
 //NewEnvMap returns a new EnvMap

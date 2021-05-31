@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -63,6 +64,11 @@ func (e *EnvSection) AddKey(key, value, secret string) (*EnvKey, error) {
 	return envKey, nil
 }
 
+//IsEmpty will return true if we have no keys in our section
+func (e *EnvSection) IsEmpty() bool {
+	return len(e.Keys) == 0
+}
+
 //EnvKey is a single entry in our file
 type EnvKey struct {
 	Name    string `json:"key"`
@@ -94,6 +100,18 @@ func (e *EnvFile) AddSection(name string) *EnvSection {
 	return es
 }
 
+//GetSection will return a EnvSection by name or an error if is
+//not found
+func (e *EnvFile) GetSection(name string) (*EnvSection, error) {
+
+	for _, section := range e.Sections {
+		if section.Name == name {
+			return section, nil
+		}
+	}
+	return &EnvSection{}, errors.New("Section not found")
+}
+
 //ToJSON will print the JSON representation for a envfile
 func (e EnvFile) ToJSON() (string, error) {
 	b, err := json.Marshal(e)
@@ -111,6 +129,11 @@ func (e *EnvFile) FromJSON(path string) error {
 	}
 
 	return json.Unmarshal([]byte(file), &e)
+}
+
+//FromStdin read from stdin
+func (e *EnvFile) FromStdin() error {
+	return json.NewDecoder(os.Stdin).Decode(&e)
 }
 
 //MetadataOptions are the command options
@@ -240,3 +263,34 @@ func hmacSha256HashValue(value, secret string) (string, error) {
 // 	expectedMAC := mac.Sum(nil)
 // 	return hmac.Equal(messageMAC, expectedMAC)
 // }
+
+//CompareSections will compare two sections and return diff
+func CompareSections(s1, s2 EnvSection) EnvSection {
+	diff := EnvSection{}
+	seen := make(map[string]int)
+
+	for i, k1 := range s1.Keys {
+		seen[k1.Name] = -1
+		for _, k2 := range s2.Keys {
+			if k1.Name == k2.Name {
+				seen[k1.Name] = i
+				if k1.Hash != k2.Hash {
+					seen[k1.Name] = -1
+					break
+				}
+			}
+		}
+
+		if seen[k1.Name] == -1 {
+			diff.Keys = append(diff.Keys, k1)
+		}
+	}
+
+	for _, k2 := range s2.Keys {
+		if _, ok := seen[k2.Name]; ok == false {
+			diff.Keys = append(diff.Keys, k2)
+		}
+	}
+
+	return diff
+}
