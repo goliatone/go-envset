@@ -1,5 +1,8 @@
 #!/bin/bash
-set -x
+
+if [[ $* == *-debug* ]]; then
+    set -x
+fi
 
 BINNAME="envset"
 VERSION_FILE="./.version"
@@ -16,19 +19,27 @@ fi
 # This will make all scripts available in the ./src/bin directory
 PATH=./src/bin:$PATH
 
-##########################################
-# Test
-##########################################
+## ########################################
+##                 Test
+## ########################################
 
+## -----
+## test:run
+## 
+## Run go tests
+##
 function test:run {
     go test ./...
 }
 
-##########################################
-# Build
-##########################################
+## ########################################
+##                 Build
+## ########################################
 
-## install binary and service on host machine
+## -----
+## release:build
+## 
+## Install binary and service on host machine.
 ## We can pass an env file with values that will
 ## be available for the running service.
 ## 
@@ -57,7 +68,10 @@ function release:build {
 }
 
 ##
+## -----
+##
 ## release
+##
 ## Bump our current version, create a git tag
 ## and push to trigger our release flow.
 ## 
@@ -91,10 +105,16 @@ function release {
     git push --tags
 }
 
-##########################################
-# Manage version
-##########################################
+##
+## ########################################
+##           Version Management
+## ########################################
 
+##
+## -----
+##
+## version:upsert
+##
 ## Save version to meta file.
 ## First time will create file if not present
 ## 
@@ -111,6 +131,12 @@ function version:upsert {
     fi
 }
 
+##
+## -----
+##
+## version:get
+##
+## Get version from meta file.
 function version:get {
     
     test -f ${VERSION_FILE} || touch ${VERSION_FILE}
@@ -126,6 +152,16 @@ function version:get {
     echo -n "$tag"
 }
 
+##
+## -----
+##
+## version:set
+##
+## Set and save version to meta file.
+## First time will create file if not present.
+## 
+## Arguments:
+## @arg 1 {string} [tag=0.0.1]
 function version:set {
     local tag
     tag=${1}
@@ -136,6 +172,8 @@ function version:set {
     echo -e "$tag" > "${VERSION_FILE}"
 }
 
+##
+## -----
 ##
 ## version:bump
 ## Bump sem ver by specifying a level.
@@ -183,18 +221,37 @@ function version:bump {
     echo "$major.$minor.$patch"
 }
 
-##########################################
-# CI/CD
-##########################################
+##
+## ########################################
+##                CI/CD
+## ########################################
 
+##
+## -----
+##
+## ci:build
+##
+## Get version from meta file.
 function ci:build {
     go build -o "./bin/${BINNAME}" "${ENTRYPOINT}"
 }
 
+##
+## -----
+##
+## ci:test
+##
+## Get version from meta file.
 function ci:test {
     go test ./... -v
 }
 
+##
+## -----
+##
+## ci:clean
+##
+## Get version from meta file.
 function ci:clean {
     rm -fr ./dist || true
     rm -f "./bin/${BINNAME}" || true

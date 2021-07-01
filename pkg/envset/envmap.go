@@ -13,8 +13,10 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+//EnvSlice type to hold envset entries
 type EnvSlice []string
 
+//EnvMap type to hold envset map
 type EnvMap map[string]string
 
 //NewEnvMap returns a new EnvMap
@@ -72,7 +74,7 @@ func (e EnvMap) Expand(osExpand bool) error {
 	return nil
 }
 
-//GetMissingKeys will compare the keys present in `keys` with the keys present in 
+//GetMissingKeys will compare the keys present in `keys` with the keys present in
 //the EnvMap instance and return a list of missing keys.
 func (e EnvMap) GetMissingKeys(keys []string) []string {
 

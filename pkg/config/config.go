@@ -1,8 +1,9 @@
 package config
 
 import (
-	"goliatone/go-envset/pkg/envset"
 	"time"
+
+	"github.com/goliatone/go-envset/pkg/envset"
 
 	"gopkg.in/ini.v1"
 )

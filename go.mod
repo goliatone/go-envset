@@ -1,4 +1,4 @@
-module goliatone/go-envset
+module github.com/goliatone/go-envset
 
 go 1.13
 

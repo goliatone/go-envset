@@ -1,4 +1,4 @@
-package envset 
+package envset
 
 import (
 	"os"
@@ -32,7 +32,7 @@ func Test_LocalEnv(t *testing.T) {
 
 func Test_LoadJSON(t *testing.T) {
 	fixture := []byte("{\"TEST_KEY_1\": \"value1\", \"TEST_KEY_2\": \"value2\",\"TEST_KEY_3\": \"value3\"}")
-	
+
 	result, err := LoadJSON(fixture)
 
 	if err != nil {
@@ -51,7 +51,6 @@ func Test_LoadJSON(t *testing.T) {
 		t.Errorf("LoadJSON failed, expected %v got %v", "value1", result["TEST_KEY_3"])
 	}
 }
-
 
 func Test_LoadIniSection(t *testing.T) {
 
@@ -81,11 +80,11 @@ TEST_KEY_3=value3
 	}
 }
 
-func Test_Expand(t *testing.T){}
+func Test_Expand(t *testing.T) {}
 
 func Test_GetMissingKeys(t *testing.T) {
 	fixture := []byte("{\"TEST_KEY_1\": \"value1\", \"TEST_KEY_2\": \"value2\",\"TEST_KEY_3\": \"value3\"}")
-	
+
 	result, err := LoadJSON(fixture)
 	if err != nil {
 		t.Errorf("LoadJSON failed, unexpected error %v", err)
@@ -104,7 +103,7 @@ func Test_GetMissingKeys(t *testing.T) {
 
 func Test_ToKVStrings(t *testing.T) {
 	fixture := []byte("{\"TEST_KEY_1\": \"value1\", \"TEST_KEY_2\": \"value2\",\"TEST_KEY_3\": \"value3\"}")
-	
+
 	env, err := LoadJSON(fixture)
 	if err != nil {
 		t.Errorf("ToKVStrings failed, unexpected error %v", err)
@@ -113,11 +112,11 @@ func Test_ToKVStrings(t *testing.T) {
 	result := env.ToKVStrings()
 
 	expected := map[string]bool{
-		"TEST_KEY_1=value1": true, 
-		"TEST_KEY_2=value2": true, 
+		"TEST_KEY_1=value1": true,
+		"TEST_KEY_2=value2": true,
 		"TEST_KEY_3=value3": true,
 	}
-	
+
 	for i := range result {
 		if _, ok := expected[result[i]]; ok != true {
 			t.Error("ToKVStrings failed, unexpected error")
@@ -125,10 +124,9 @@ func Test_ToKVStrings(t *testing.T) {
 	}
 }
 
-
-func unsetEnv(prefix string)(restore func()) {
+func unsetEnv(prefix string) (restore func()) {
 	before := map[string]string{}
-	
+
 	for _, e := range os.Environ() {
 		if !strings.HasPrefix(e, prefix) {
 			continue
@@ -148,7 +146,7 @@ func unsetEnv(prefix string)(restore func()) {
 			parts := strings.SplitN(e, "=", 2)
 			after[parts[0]] = parts[1]
 
-			v, ok :=  before[parts[0]]
+			v, ok := before[parts[0]]
 			if !ok {
 				os.Unsetenv(parts[0])
 				continue
