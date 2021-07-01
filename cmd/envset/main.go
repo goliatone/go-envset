@@ -39,7 +39,7 @@ func init() {
 				Email: "hi@goliat.one",
 			},
 		},
-		Copyright: "(c) 2020 Goliatone",
+		Copyright: "(c) 2021 Goliatone",
 		Usage:     "Load environment variables to your shell and run a command",
 		HelpName:  "envset",
 		UsageText: "envset [environment] -- [command]\n\nEXAMPLE:\n\t envset development -- node index.js\n\t eval $(envset development --isolated=true)\n\t envset development -- say '${MY_GREETING}'",
