@@ -177,16 +177,51 @@ func run(args []string) {
 			{
 				Name: "compare",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name: "command2flag",
-						// ...
-					},
+					&cli.StringFlag{Name: "section", Usage: "env file section", Required: true},
+					&cli.BoolFlag{Name: "print", Usage: "print the comparison results to stdout", Value: false},
+					&cli.StringFlag{Name: "filename", Usage: "metadata file name", Value: "metadata.json"},
+					&cli.StringFlag{Name: "filepath", Usage: "metadata file path", Value: "./.envmeta"},
 				},
 				Action: func(c *cli.Context) error {
-					env := envset.EnvFile{}
-					env.FromJSON("./.envmeta/metadata.json")
-					str, _ := env.ToJSON()
-					fmt.Println(str)
+					//TODO: get section name
+					//TODO: get source file, default metadata
+					print := c.Bool("print")
+					name := c.String("section")
+					filename := c.String("filename")
+					originalDir := c.String("filepath")
+
+					src := envset.EnvFile{}
+					src.FromJSON(filepath.Join(originalDir, filename))
+
+					s1, err := src.GetSection(name)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					tgt := envset.EnvFile{}
+					tgt.FromStdin()
+					s2, err := tgt.GetSection(name)
+
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					//TODO: we want to return a KeysDiff
+					//where we have an annotation of what was wrong:
+					//src missing, src extra, different hash
+					s3 := envset.CompareSections(*s1, *s2)
+					if s3.IsEmpty() == false {
+						if print {
+							for _, k := range s3.Keys {
+								fmt.Printf("key: %s %s\n", k.Name, k.Comment)
+
+							}
+						}
+						//Exit with error e.g. to fail CI
+						// return errors.New("wrong keys")
+						os.Exit(1)
+					}
+
 					return nil
 				},
 			},
