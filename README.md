@@ -88,9 +88,17 @@ envset local -- env | grep MSG | say
 ```
 
 ## Installation
-
+<!-- 
 TODO: List how to install in all different platforms
+-->
 
+Add tap to brew:
+
+```
+$ brew tap goliatone/homebrew-tap
+```
+
+Install `envset`:
 
 ```
 $ brew install envset
