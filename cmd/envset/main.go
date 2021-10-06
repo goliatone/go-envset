@@ -21,8 +21,6 @@ var app *cli.App
 var cnf *config.Config
 
 func init() {
-	cnf, _ = config.Load(".envsetrc")
-
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "version",
 		Aliases: []string{"V"},
@@ -52,6 +50,11 @@ func main() {
 }
 
 func run(args []string) {
+	cnf, err := config.Load(".envsetrc")
+	if err != nil {
+		log.Println("Error loading configuration:", err)
+		log.Panic("Ensure you have a valid .envsetrc")
+	}
 
 	subcommands := []*cli.Command{}
 
@@ -311,7 +314,7 @@ func run(args []string) {
 		return envset.Run(env, filename, cmd, arg, isolated, expand, required)
 	}
 
-	err := app.Run(args)
+	err = app.Run(args)
 	if err != nil {
 		log.Fatal(err)
 	}
