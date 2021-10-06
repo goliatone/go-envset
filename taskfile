@@ -233,7 +233,15 @@ function version:bump {
 ##
 ## Get version from meta file.
 function ci:build {
-    go build -o "./bin/${BINNAME}" "${ENTRYPOINT}"
+    VERSION=$(version:get)
+    BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
+
+    LDFLAGS="-X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
+    
+    echo "building version: ${VERSION}"
+    echo "go build -ldflags ${LDFLAGS}"
+
+    go build -ldflags "${LDFLAGS}" -o "./bin/${BINNAME}" "${ENTRYPOINT}"
 }
 
 ##
