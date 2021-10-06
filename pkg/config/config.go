@@ -30,12 +30,18 @@ type Config struct {
 
 //Load returns configuration object from `.envsetrc` file
 func Load(name string) (*Config, error) {
-	filename, err := envset.FileFinder(name)
-	if err != nil {
-		return &Config{}, err
-	}
+	var err error
+	var cfg *ini.File
+	var filename string
 
-	cfg, err := ini.ShadowLoad(filename, config)
+	filename, _ = envset.FileFinder(name)
+
+	if filename == "" {
+		cfg, err = ini.ShadowLoad(config)
+	} else {
+		cfg, err = ini.ShadowLoad(filename, config)
+	}
+	
 	if err != nil {
 		return &Config{}, err
 	}
