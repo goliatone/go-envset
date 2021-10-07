@@ -145,8 +145,13 @@ func interpolateCmds(str string, vars map[string]string) (string, error) {
 		command := strings.Replace(match, ")", "", -1)
 		command = strings.Replace(command, "$(", "", -1)
 
+		if len(command) == 0 {
+			continue
+		}
+
 		//Some commands might have arguments: $(hostname -f)
 		args := strings.Split(command, " ")
+
 		res, err := exec.Command(args[0], args[1:]...).Output()
 		if err != nil {
 			return "", err
