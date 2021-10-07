@@ -103,6 +103,8 @@ function release {
 
     # Push tags and trigger release 🚀 🥳
     git push --tags
+
+    git push
 }
 
 ##
