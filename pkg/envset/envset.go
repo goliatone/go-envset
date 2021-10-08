@@ -14,10 +14,21 @@ import (
 //DefaultSection is the name of the default ini section
 const DefaultSection = ini.DEFAULT_SECTION
 
+//RunOptions is used to configure a run command
+type RunOptions struct {
+	Filename      string
+	Cmd           string
+	Args          []string
+	Isolated      bool
+	Expand        bool
+	Required      []string
+	ExportEnvName string
+}
+
 //Run will run the given command after loading the environment
-func Run(environment, name, cmd string, args []string, isolated, expand bool, required []string) error {
+func Run(environment string, options RunOptions) error {
 	//TODO: This might be an issue here!
-	filename, err := FileFinder(name)
+	filename, err := FileFinder(options.Filename)
 	if err != nil {
 		return err
 	}
@@ -42,7 +53,7 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 
 	//we don't have any values here. Is that what the user
 	//wants?
-	if len(sec.KeyStrings()) == 0 && isolated {
+	if len(sec.KeyStrings()) == 0 && options.Isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
 			// fmt.Println("we have a the follow sections but not what you want")
@@ -57,11 +68,20 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
 	}
 
+	//Ensure we export the env name to the environment
+	//e.g. APP_ENV=development
+	if !sec.HasKey(options.ExportEnvName) {
+		sec.NewKey(options.ExportEnvName, environment)
+	} else {
+		sec.DeleteKey(options.ExportEnvName)
+		sec.NewKey(options.ExportEnvName, environment)
+	}
+
 	//Build context object from section key/values
 	context := LoadIniSection(sec)
 
 	//Replace ${VAR} and $(command) in values
-	err = context.Expand(expand)
+	err = context.Expand(options.Expand)
 	if err != nil {
 		return err
 	}
@@ -73,21 +93,21 @@ func Run(environment, name, cmd string, args []string, isolated, expand bool, re
 	//note that if these are not in single quited they will
 	//be resolved by the shell when we call envset and we will
 	//read the the result of that replacement, even if is empty.
-	InterpolateKVStrings(args, context, expand)
+	InterpolateKVStrings(options.Args, context, options.Expand)
 
-	command := exec.Command(cmd, args...)
+	command := exec.Command(options.Cmd, options.Args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
 	//If we want to check for required variables do it now.
-	missing := context.GetMissingKeys(required)
+	missing := context.GetMissingKeys(options.Required)
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
 	}
 
 	//If we want to run in an isolated context we just use
 	//our variables from the loaded file
-	if isolated {
+	if options.Isolated {
 		command.Env = vars
 		//we actually add our context to the os
 	} else {
