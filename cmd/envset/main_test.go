@@ -92,6 +92,43 @@ func Test_DotEnvFile(t *testing.T) {
 	}
 }
 
+func Test_Template(t *testing.T) {
+	dir := cd("testdata", t)
+	rm("envset.example", t)
+
+	testcli.Run("envset", "template")
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	assert.FileExists(t, "envset.example")
+
+	rm("envset.example", t)
+	cd(dir, t)
+}
+
+func Test_TemplateOptions(t *testing.T) {
+	dir := cd("testdata", t)
+	rm("output/env.tpl", t)
+
+	testcli.Run("envset",
+		"template",
+		"--filename=env.tpl",
+		"--filepath=output",
+		"--env-file=.env",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	assert.FileExists(t, path.Join("output", "env.tpl"))
+
+	rm("output/env.tpl", t)
+	cd(dir, t)
+}
+
 func rm(dir string, t *testing.T) {
 	err := os.RemoveAll(dir)
 	if err != nil {
