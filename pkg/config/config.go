@@ -10,7 +10,17 @@ import (
 
 var config = []byte(`
 filename=.envset
+expand=true
 isolated=true
+export_environment=APP_ENV
+
+[metadata]
+dir=.meta
+file=data.json
+
+[template]
+path=.
+file=envset.example
 
 [environments]
 name=test
@@ -25,7 +35,18 @@ type Config struct {
 	Environments struct {
 		Name []string `ini:"name,omitempty,allowshadow"`
 	} `ini:"environments"`
-	Created time.Time `ini:"-"`
+	Created       time.Time `ini:"-"`
+	Expand        bool      `ini:"expand"`
+	Isolated      bool      `ini:"isolated"`
+	ExportEnvName string    `ini:"export_environment"`
+	Meta          struct {
+		Dir  string `ini:"dir"`
+		File string `ini:"file"`
+	} `ini:"metadata"`
+	Template struct {
+		Path string `ini:"path"`
+		File string `ini:"file"`
+	} `ini:"template"`
 }
 
 //Load returns configuration object from `.envsetrc` file
@@ -41,7 +62,7 @@ func Load(name string) (*Config, error) {
 	} else {
 		cfg, err = ini.ShadowLoad(filename, config)
 	}
-	
+
 	if err != nil {
 		return &Config{}, err
 	}
