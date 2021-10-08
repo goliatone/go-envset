@@ -1,12 +1,26 @@
 package main
 
 import (
-	"os"
 	"testing"
+
+	"github.com/rendon/testcli"
 )
 
 func Test_CommandHelp(t *testing.T) {
-	args := os.Args[0:1]
-	args = append(args, "-h")
-	run(args, execCmd{})
+	testcli.Run("envset", "-h")
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+}
+
+func Test_Version(t *testing.T) {
+	testcli.Run("envset", "-V")
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("version") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "version?")
+	}
 }
