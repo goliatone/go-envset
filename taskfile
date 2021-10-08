@@ -253,6 +253,7 @@ function ci:build {
 ##
 ## Get version from meta file.
 function ci:test {
+    go install cmd/envset/main.go
     go test ./... -v
 }
 
