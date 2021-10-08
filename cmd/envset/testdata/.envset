@@ -1,0 +1,4 @@
+GLOBAL=a_global
+
+[development]
+EXPECTED=envset_result
