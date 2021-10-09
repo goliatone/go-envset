@@ -17,6 +17,7 @@ export_environment=APP_ENV
 [metadata]
 dir=.meta
 file=data.json
+print=true
 
 [template]
 path=.
@@ -40,8 +41,9 @@ type Config struct {
 	Isolated      bool      `ini:"isolated"`
 	ExportEnvName string    `ini:"export_environment"`
 	Meta          struct {
-		Dir  string `ini:"dir"`
-		File string `ini:"file"`
+		Dir   string `ini:"dir"`
+		File  string `ini:"file"`
+		Print bool   `ini:"print"`
 	} `ini:"metadata"`
 	Template struct {
 		Path string `ini:"path"`

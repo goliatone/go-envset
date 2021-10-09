@@ -203,29 +203,14 @@ func run(args []string, exec execCmd) {
 						Usage: "print the comparison results to stdout",
 						Value: cnf.Meta.Print,
 					},
-					// &cli.StringFlag{
-					// 	Name:  "filename",
-					// 	Usage: "metadata file name",
-					// 	Value: cnf.Meta.File,
-					// },
-					// &cli.StringFlag{
-					// 	Name:  "filepath",
-					// 	Usage: "metadata file path",
-					// 	Value: cnf.Meta.Dir,
-					// },
 				},
 				Action: func(c *cli.Context) error {
-					//TODO: get section name
-					//TODO: get source file, default metadata
 					print := c.Bool("print")
 					name := c.String("section")
 					source := c.Args().Get(0)
 					target := c.Args().Get(1)
-					// filename := c.String("filename")
-					// originalDir := c.String("filepath")
 
 					src := envset.EnvFile{}
-					// spath := filepath.Join(originalDir, filename)
 					src.FromJSON(source)
 
 					s1, err := src.GetSection(name)
@@ -234,7 +219,6 @@ func run(args []string, exec execCmd) {
 					}
 
 					tgt := envset.EnvFile{}
-					// tgt.FromStdin()
 					tgt.FromJSON(target)
 					s2, err := tgt.GetSection(name)
 
