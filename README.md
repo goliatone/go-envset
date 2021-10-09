@@ -22,7 +22,7 @@ Is as simple as calling:
 envset development -- node server.js
 ```
 
-This will load the variables defined in the `[development]` header of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
+This will load the variables defined in the `[development]` section of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
 
 See the [examples](#examples) section for more details.
 
@@ -47,6 +47,8 @@ Instead of having an `.env` file per environment you can have one single `.envse
 
 ## Examples
 
+### Executing a command
+
 An **.envset** file could look like this:
 
 ```ini
@@ -70,22 +72,45 @@ NODE_POSTGRES_USER=postgres
 ```
 
 
-To use it, simply prefix the call to your program with `envset` and the name of the environment header:
+To use it, simply prefix the call to your program with `envset` and the name of the environment section. The node `app.js` will be running with the environment variables specified in the **development** section of the **.envset** file.
 
 ```
 $ envset development -- node app.js
 ```
 
-You can:
+### Generating an example template
+
+If we run the `envset template` command with the previous **.envset** file we generate a **envset.example** file:
 
 ```ini
-[local]
-MSG=Hello World
+[development]
+NODE_AWS_SECRET_ACCESS_KEY={{NODE_AWS_SECRET_ACCESS_KEY}}
+NODE_AWS_ACCESS_KEY_ID={{NODE_AWS_ACCESS_KEY_ID}}
+NODE_HONEYBADGER_KEY={{NODE_HONEYBADGER_KEY}}
+NODE_POSTGRES_ENDPOINT={{NODE_POSTGRES_ENDPOINT}}
+NODE_POSTGRES_DATABASE={{NODE_POSTGRES_DATABASE}}
+NODE_POSTGRES_PSWD={{NODE_POSTGRES_PSWD}}
+NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
+
+[production]
+NODE_AWS_SECRET_ACCESS_KEY={{NODE_AWS_SECRET_ACCESS_KEY}}
+NODE_AWS_ACCESS_KEY_ID={{NODE_AWS_ACCESS_KEY_ID}}
+NODE_HONEYBADGER_KEY={{NODE_HONEYBADGER_KEY}}
+NODE_POSTGRES_ENDPOINT={{NODE_POSTGRES_ENDPOINT}}
+NODE_POSTGRES_DATABASE={{NODE_POSTGRES_DATABASE}}
+NODE_POSTGRES_PSWD={{NODE_POSTGRES_PSWD}}
+NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
 ```
 
+
+### Support for .env files
+
+You can load other environment files like `.env` files:
+
 ```
-envset local -- env | grep MSG | say
+envset --env-file=.env -- node index.js
 ```
+
 
 ## Installation
 <!-- 
@@ -118,7 +143,7 @@ APP_BASE_URL=https://envset.sh
 
 ### Commands
 
-The following is a list of the available default commands:
+The following is a list of the available commands:
 
 * metadata
 * template
@@ -150,15 +175,24 @@ You can create an `.envsetrc` file with configuration options for `envset`.
 The default `.envsetrc` looks like this:
 
 ```
-;Default environment names
-filename=./.envset
-exportEnvironment=NODE_ENV
+expand=true
+isolated=true
+filename=.envset
+export_environment=APP_ENV
+
+[metadata]
+dir=.meta
+file=data.json
+
+[template]
+path=.
+file=envset.example
 
 [environments]
-names[]=test
-names[]=staging
-names[]=production
-names[]=development
+name=test
+name=staging
+name=production
+name=development
 ```
 
 ### Configuration
