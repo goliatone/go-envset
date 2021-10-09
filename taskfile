@@ -5,6 +5,7 @@ if [[ $* == *-debug* ]]; then
 fi
 
 BINNAME="envset"
+BINPATH="cmd/envset"
 VERSION_FILE="./.version"
 PROJECT="$(awk 'match($0, /module (.*)/) {print substr($2, RSTART, RLENGTH)}' go.mod)"
 ENTRYPOINT="cmd/envset/main.go"
@@ -243,7 +244,7 @@ function ci:build {
     echo "building version: ${VERSION}"
     echo "go build -ldflags ${LDFLAGS}"
 
-    go build -ldflags "${LDFLAGS}" -o "./bin/${BINNAME}" "${ENTRYPOINT}"
+    go build -ldflags "${LDFLAGS}" -o "${BINPATH}/${BINNAME}" "${ENTRYPOINT}"
 }
 
 ##
@@ -253,7 +254,8 @@ function ci:build {
 ##
 ## Get version from meta file.
 function ci:test {
-    go install cmd/envset/main.go
+    go env
+    go install ${ENTRYPOINT}
     go test ./... -v
 }
 
@@ -264,8 +266,7 @@ function ci:test {
 ##
 ## Get version from meta file.
 function ci:clean {
-    rm -fr ./dist || true
-    rm -f "./bin/${BINNAME}" || true
+    rm -f "${BINPATH}/${BINNAME}" || true
 }
 
 ##########################################
