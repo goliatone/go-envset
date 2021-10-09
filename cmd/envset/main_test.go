@@ -10,20 +10,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var bin string
+
+func init() {
+	cur, _ := os.Getwd()
+	bin = path.Join(cur, "envset")
+}
+
 func Test_CommandHelp(t *testing.T) {
 	fmt.Println("we are at")
 	cur, _ := os.Getwd()
 	fmt.Printf("current dir: %s\n", cur)
-	fmt.Printf("path: %s\n\n", os.Getenv("PATH"))
+	fmt.Printf("path: %s\n", os.Getenv("PATH"))
+	fmt.Printf("bin: %s\n\n", bin)
 
-	testcli.Run("envset", "-h")
+	testcli.Run(bin, "-h")
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
 	}
 }
 
 func Test_Version(t *testing.T) {
-	testcli.Run("envset", "-V")
+	testcli.Run(bin, "-V")
 
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
@@ -35,7 +43,7 @@ func Test_Version(t *testing.T) {
 }
 
 func Test_Print(t *testing.T) {
-	testcli.Run("envset", "--env-file=testdata/.envset")
+	testcli.Run(bin, "--env-file=testdata/.envset")
 
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
@@ -51,7 +59,7 @@ func Test_Metadata(t *testing.T) {
 	dir := cd("testdata", t)
 	rm(".envmeta", t)
 
-	testcli.Run("envset",
+	testcli.Run(bin,
 		"metadata",
 	)
 
@@ -69,7 +77,7 @@ func Test_Metadata(t *testing.T) {
 func Test_MetadataOptions(t *testing.T) {
 	rm("testdata/meta", t)
 
-	testcli.Run("envset",
+	testcli.Run(bin,
 		"metadata",
 		"--env-file=testdata/.envset",
 		"--filepath=testdata/meta",
@@ -87,7 +95,7 @@ func Test_MetadataOptions(t *testing.T) {
 }
 
 func Test_DotEnvFile(t *testing.T) {
-	testcli.Run("envset", "--env-file=testdata/.env")
+	testcli.Run(bin, "--env-file=testdata/.env")
 
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
@@ -102,7 +110,7 @@ func Test_Template(t *testing.T) {
 	dir := cd("testdata", t)
 	rm("envset.example", t)
 
-	testcli.Run("envset", "template")
+	testcli.Run(bin, "template")
 
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
@@ -118,7 +126,7 @@ func Test_TemplateOptions(t *testing.T) {
 	dir := cd("testdata", t)
 	rm("output/env.tpl", t)
 
-	testcli.Run("envset",
+	testcli.Run(bin,
 		"template",
 		"--filename=env.tpl",
 		"--filepath=output",
