@@ -22,7 +22,10 @@ builds:
     main: "./cmd/envset/main.go"
     binary: "envset"
     ldflags:
-      - -s -w -X pkg/version.Tag={{.Version}} -X pkg/version.Time={{.Date}} -X pkg/version.User=goliatone
+      - -s -w
+      - -X github.com/goliatone/go-envset/pkg/version.Tag=v{{.Version}}
+      - -X github.com/goliatone/go-envset/pkg/version.Time={{.Date}}
+      - -X github.com/goliatone/go-envset/pkg/version.User=goliatone
 archives:
   - replacements:
       386: i386
