@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -18,12 +17,6 @@ func init() {
 }
 
 func Test_CommandHelp(t *testing.T) {
-	fmt.Println("we are at")
-	cur, _ := os.Getwd()
-	fmt.Printf("current dir: %s\n", cur)
-	fmt.Printf("path: %s\n", os.Getenv("PATH"))
-	fmt.Printf("bin: %s\n\n", bin)
-
 	testcli.Run(bin, "-h")
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
@@ -57,7 +50,7 @@ func Test_Print(t *testing.T) {
 
 func Test_Metadata(t *testing.T) {
 	dir := cd("testdata", t)
-	rm(".envmeta", t)
+	rm(".meta", t)
 
 	testcli.Run(bin,
 		"metadata",
@@ -67,10 +60,10 @@ func Test_Metadata(t *testing.T) {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
 	}
 
-	assert.DirExists(t, ".envmeta")
-	assert.FileExists(t, path.Join(".envmeta", "metadata.json"))
+	assert.DirExists(t, ".meta")
+	assert.FileExists(t, path.Join(".meta", "data.json"))
 
-	rm(".envmeta", t)
+	rm(".meta", t)
 	cd(dir, t)
 }
 
@@ -139,7 +132,7 @@ func Test_TemplateOptions(t *testing.T) {
 
 	assert.FileExists(t, path.Join("output", "env.tpl"))
 
-	rm("output/env.tpl", t)
+	rm("output", t)
 	cd(dir, t)
 }
 
