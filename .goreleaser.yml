@@ -37,6 +37,8 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+      - "^Update README"
+      - "merge fix"
 brews:
   - name: envset
     tap:
