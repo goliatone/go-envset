@@ -187,51 +187,75 @@ func run(args []string, exec execCmd) {
 		},
 		Subcommands: []*cli.Command{
 			{
-				Name: "compare",
+				Name:        "compare",
+				Usage:       "compare two metadata files",
+				UsageText:   "envset metadata compare --section=[section] [source] [target]",
+				Description: "compares the provided section of two metadata files",
+				Category:    "METADATA",
 				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "section", Usage: "env file section", Required: true},
-					&cli.BoolFlag{Name: "print", Usage: "print the comparison results to stdout", Value: false},
-					&cli.StringFlag{Name: "filename", Usage: "metadata file name", Value: "metadata.json"},
-					&cli.StringFlag{Name: "filepath", Usage: "metadata file path", Value: "./.envmeta"},
+					&cli.StringFlag{
+						Name:     "section",
+						Usage:    "env file section",
+						Required: true,
+					},
+					&cli.BoolFlag{
+						Name:  "print",
+						Usage: "print the comparison results to stdout",
+						Value: cnf.Meta.Print,
+					},
+					// &cli.StringFlag{
+					// 	Name:  "filename",
+					// 	Usage: "metadata file name",
+					// 	Value: cnf.Meta.File,
+					// },
+					// &cli.StringFlag{
+					// 	Name:  "filepath",
+					// 	Usage: "metadata file path",
+					// 	Value: cnf.Meta.Dir,
+					// },
 				},
 				Action: func(c *cli.Context) error {
 					//TODO: get section name
 					//TODO: get source file, default metadata
 					print := c.Bool("print")
 					name := c.String("section")
-					filename := c.String("filename")
-					originalDir := c.String("filepath")
+					source := c.Args().Get(0)
+					target := c.Args().Get(1)
+					// filename := c.String("filename")
+					// originalDir := c.String("filepath")
 
 					src := envset.EnvFile{}
-					src.FromJSON(filepath.Join(originalDir, filename))
+					// spath := filepath.Join(originalDir, filename)
+					src.FromJSON(source)
 
 					s1, err := src.GetSection(name)
 					if err != nil {
-						log.Fatal(err)
+						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in source metadata file:\n%s", name, source), 1)
 					}
 
 					tgt := envset.EnvFile{}
-					tgt.FromStdin()
+					// tgt.FromStdin()
+					tgt.FromJSON(target)
 					s2, err := tgt.GetSection(name)
 
 					if err != nil {
-						log.Fatal(err)
+						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
 					}
 
 					//TODO: we want to return a KeysDiff
 					//where we have an annotation of what was wrong:
 					//src missing, src extra, different hash
 					s3 := envset.CompareSections(*s1, *s2)
+
 					if s3.IsEmpty() == false {
+						fmt.Println("")
 						if print {
 							for _, k := range s3.Keys {
-								fmt.Printf("key: %s %s\n", k.Name, k.Comment)
-
+								fmt.Printf("key %s: %s\n", k.Name, k.Comment)
 							}
 						}
 						//Exit with error e.g. to fail CI
-						// return errors.New("wrong keys")
-						os.Exit(1)
+						return cli.Exit("Metadata test failed!", 1)
 					}
 
 					return nil
