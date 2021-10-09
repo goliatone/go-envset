@@ -14,6 +14,8 @@ func Test_CommandHelp(t *testing.T) {
 	fmt.Println("we are at")
 	cur, _ := os.Getwd()
 	fmt.Printf("current dir: %s\n", cur)
+	fmt.Printf("path: %s\n\n", os.Getenv("PATH"))
+
 	testcli.Run("envset", "-h")
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
