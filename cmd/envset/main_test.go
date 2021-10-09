@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -10,6 +11,9 @@ import (
 )
 
 func Test_CommandHelp(t *testing.T) {
+	fmt.Println("we are at")
+	cur, _ := os.Getwd()
+	fmt.Printf("current dir: %s\n", cur)
 	testcli.Run("envset", "-h")
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
