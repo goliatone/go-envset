@@ -254,7 +254,7 @@ function ci:build {
 ##
 ## Get version from meta file.
 function ci:test {
-    go env
+    export PATH=${PATH}:${BINPATH}
     go install ${ENTRYPOINT}
     go test ./... -v
 }
