@@ -69,6 +69,15 @@ func (e *EnvSection) IsEmpty() bool {
 	return len(e.Keys) == 0
 }
 
+//ToJSON returns a JSON representation of a section
+func (e *EnvSection) ToJSON() (string, error) {
+	b, err := json.Marshal(e)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
 //EnvKey is a single entry in our file
 type EnvKey struct {
 	Name    string `json:"key"`
@@ -273,10 +282,10 @@ func CompareSections(s1, s2 EnvSection) EnvSection {
 		seen[k1.Name] = -1
 		for _, k2 := range s2.Keys {
 			if k1.Name == k2.Name {
-				seen[k1.Name] = i
+				seen[k1.Name] = i + 1
 				if k1.Hash != k2.Hash {
-					seen[k1.Name] = -1
 					k1.Comment = "different hash value"
+					diff.Keys = append(diff.Keys, k1)
 					break
 				}
 			}
