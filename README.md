@@ -111,6 +111,17 @@ You can load other environment files like `.env` files:
 envset --env-file=.env -- node index.js
 ```
 
+### Metadata
+
+The `metadata` command will generate a JSON file capturing the values of the provided env file.
+
+### Metadata Compare
+
+Note that `envset metadata compare` will output to stderr in the case that both files do not match.
+
+```
+$ envset metadata compare --section=development .metadata/data.json staging-metadata.json 2>&1 | jq . 
+```
 
 ## Installation
 <!-- 
@@ -146,6 +157,7 @@ APP_BASE_URL=https://envset.sh
 The following is a list of the available commands:
 
 * metadata
+    * compare
 * template
 
 ### Variable Expansion

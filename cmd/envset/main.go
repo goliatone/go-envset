@@ -226,17 +226,16 @@ func run(args []string, exec execCmd) {
 						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
 					}
 
-					//TODO: we want to return a KeysDiff
-					//where we have an annotation of what was wrong:
-					//src missing, src extra, different hash
 					s3 := envset.CompareSections(*s1, *s2)
+					s3.Name = name
 
 					if s3.IsEmpty() == false {
-						fmt.Println("")
 						if print {
-							for _, k := range s3.Keys {
-								fmt.Printf("key %s: %s\n", k.Name, k.Comment)
+							j, err := s3.ToJSON()
+							if err != nil {
+								return cli.Exit(err, 1)
 							}
+							return cli.Exit(j, 1)
 						}
 						//Exit with error e.g. to fail CI
 						return cli.Exit("Metadata test failed!", 1)
