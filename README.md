@@ -78,6 +78,25 @@ To use it, simply prefix the call to your program with `envset` and the name of 
 $ envset development -- node app.js
 ```
 
+#### Variable substitution
+
+You can execute commands that use environment variables in the command arguments.
+
+Is important to note that you need to scape the variable so that it is not replaced in the shell as you call `envset`. You can do so by using single quotes `'` or the scape char `\$`.
+
+```
+$ envset development -- say '${MSG}'
+$ envset development -- say \${MSG} 
+```
+
+#### Inherit environment
+
+By default `envset` will run commands in a clean environment. Sometimes you want the executed command to access the host's environment. To do so you need to pass the `--isolated=false` flag.
+
+```
+$ envset development --isolated=false -- spd-say '${APP_NAME}' 
+```
+
 ### Generating an example template
 
 If we run the `envset template` command with the previous **.envset** file we generate a **envset.example** file:
