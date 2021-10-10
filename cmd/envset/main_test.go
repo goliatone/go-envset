@@ -69,6 +69,27 @@ func Test_ExecCmd(t *testing.T) {
 	cd(dir, t)
 }
 
+func Test_APP_ENV(t *testing.T) {
+	dir := cd("testdata", t)
+
+	testcli.Run(bin,
+		"development",
+		"--",
+		"sh",
+		"app_env.sh",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("development") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "APP_ENV?")
+	}
+
+	cd(dir, t)
+}
+
 func Test_Metadata(t *testing.T) {
 	dir := cd("testdata", t)
 	rm(".meta", t)
