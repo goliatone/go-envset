@@ -2,3 +2,4 @@ GLOBAL=a_global
 
 [development]
 EXPECTED=envset_result
+APP_NAME=envset.test

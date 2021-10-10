@@ -109,7 +109,7 @@ func run(args []string, exec execCmd) {
 					ExportEnvName: c.String("export-env-name"),
 				}
 
-				if c.NArg() == 0 {
+				if exec.Cmd == "" {
 					//we can do: eval `envset development`
 					//we can do: envset development > /tmp/env1 | source
 					//https://stackoverflow.com/questions/36074851/persist-the-value-set-for-an-env-variable-on-the-shell-after-the-go-program-exit
@@ -383,7 +383,8 @@ func cmdFromArgs(args []string) execCmd {
 	}
 
 	if idx > 0 && len(args) >= idx {
-		a = args[idx:]
+		cmd = args[idx]
+		a = args[idx+1:]
 	}
 
 	return execCmd{

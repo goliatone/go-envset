@@ -48,6 +48,27 @@ func Test_Print(t *testing.T) {
 	}
 }
 
+func Test_ExecCmd(t *testing.T) {
+	dir := cd("testdata", t)
+
+	testcli.Run(bin,
+		"development",
+		"--",
+		"sh",
+		"test.sh",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("out: envset_result") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "envset_result?")
+	}
+
+	cd(dir, t)
+}
+
 func Test_Metadata(t *testing.T) {
 	dir := cd("testdata", t)
 	rm(".meta", t)
