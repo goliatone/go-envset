@@ -110,10 +110,6 @@ func run(args []string, exec execCmd) {
 				}
 
 				if exec.Cmd == "" {
-					//we can do: eval `envset development`
-					//we can do: envset development > /tmp/env1 | source
-					//https://stackoverflow.com/questions/36074851/persist-the-value-set-for-an-env-variable-on-the-shell-after-the-go-program-exit
-					//TODO: Pass required so we show missing ones?
 					return envset.Print(env, ro.Filename, ro.Isolated, ro.Expand)
 				}
 
