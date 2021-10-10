@@ -74,7 +74,7 @@ NODE_POSTGRES_USER=postgres
 
 To use it, simply prefix the call to your program with `envset` and the name of the environment section. The node `app.js` will be running with the environment variables specified in the **development** section of the **.envset** file.
 
-```
+```sh
 $ envset development -- node app.js
 ```
 
@@ -84,7 +84,7 @@ You can execute commands that use environment variables in the command arguments
 
 Is important to note that you need to scape the variable so that it is not replaced in the shell as you call `envset`. You can do so by using single quotes `'` or the scape char `\$`.
 
-```
+```sh
 $ envset development -- say '${MSG}'
 $ envset development -- say \${MSG} 
 ```
@@ -95,6 +95,15 @@ By default `envset` will run commands in a clean environment. Sometimes you want
 
 ```
 $ envset development --isolated=false -- spd-say '${APP_NAME}' 
+```
+
+#### Load env file to current shell session
+
+If you want to make the variables defined in a env file to your running shell session use something like the following snippet.
+
+
+```sh
+$ eval $(envset development)
 ```
 
 ### Generating an example template
