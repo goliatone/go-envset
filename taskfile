@@ -97,7 +97,7 @@ function release {
 
     # Add updated version file to git
     git add "${VERSION_FILE}"
-    git commit -m "Bump version"
+    git commit -m "Bump version: v${tag}"
 
     # Create a new tag
     git tag -a "v${tag}" -m "${message}"
