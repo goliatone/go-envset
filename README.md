@@ -18,7 +18,7 @@ Application configuration usually are small and sensitive data such as API keys 
 
 Is as simple as calling:
 
-```sh
+```console
 $ envset development -- node server.js
 ```
 
@@ -73,7 +73,7 @@ NODE_POSTGRES_USER=postgres
 
 To use it, simply prefix the call to your program with `envset` and the name of the environment section. The node `app.js` will be running with the environment variables specified in the **development** section of the **.envset** file.
 
-```sh
+```console
 $ envset development -- node app.js
 ```
 
@@ -92,7 +92,7 @@ $ envset development -- say \${MSG}
 
 By default `envset` will run commands in a clean environment. Sometimes you want the executed command to access the host's environment. To do so you need to pass the `--isolated=false` flag.
 
-```
+```console
 $ envset development --isolated=false -- spd-say '${APP_NAME}' 
 ```
 
@@ -117,13 +117,13 @@ APP_MESSAGE="this is a test"
 
 If you run the following command:
 
-```sh
+```console
 $ envset development --required=BOOM -R BOOM2 -- node index.js
 ```
 
 `envset` will exit with an error and a message with the missing variables:
 
-```
+```console
 missing required keys: BOOM,BOOM2
 ```
 
@@ -156,8 +156,8 @@ NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
 
 You can load other environment files like `.env` files:
 
-```
-envset --env-file=.env -- node index.js
+```console
+$ envset --env-file=.env -- node index.js
 ```
 
 ### Metadata
@@ -168,25 +168,49 @@ The `metadata` command will generate a JSON file capturing the values of the pro
 
 Note that `envset metadata compare` will output to stderr in the case that both files do not match.
 
-```
+```console
 $ envset metadata compare --section=development .metadata/data.json staging-metadata.json 2>&1 | jq . 
 ```
 
 ## Installation
+
+### macOS
 <!-- 
 TODO: List how to install in all different platforms
 -->
 
 Add tap to brew:
 
-```
+```console
 $ brew tap goliatone/homebrew-tap
 ```
 
 Install `envset`:
 
-```
+```console
 $ brew install envset
+```
+
+
+### Ubuntu/Debian
+
+```console
+$ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.deb
+$ dpkg -i envset_<version>_linux_x86_64.deb
+```
+
+### CentOS/Redhat
+
+```console
+$ yum localinstall https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.rpm
+```
+
+### Manual Install
+
+```console
+$ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.tar.gz
+$ tar -C /usr/bin/ -xzvf envset_<version>_linux_x86_64.tar.gz envset
+$ chmod +x /usr/bin/envset
 ```
 
 ## Documentation
