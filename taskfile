@@ -269,6 +269,14 @@ function ci:clean {
     rm -f "${BINPATH}/${BINNAME}" || true
 }
 
+
+function install:ubuntu {
+    tag=${1:-$(version:get)}
+    cd /tmp
+    wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_${tag}_linux_x86_64.deb
+    sudo dpkg -i envset_${tag}_linux_x86_64.deb
+}
+
 ##########################################
 # Help
 ##########################################
