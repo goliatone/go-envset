@@ -30,7 +30,7 @@ func Run(environment string, options RunOptions) error {
 	//TODO: This might be an issue here!
 	filename, err := FileFinder(options.Filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("file finder %s: %w", options.Filename, err)
 	}
 
 	//EnvFile.Load(filename)
@@ -83,7 +83,7 @@ func Run(environment string, options RunOptions) error {
 	//Replace ${VAR} and $(command) in values
 	err = context.Expand(options.Expand)
 	if err != nil {
-		return err
+		return fmt.Errorf("context expand: %w", err)
 	}
 
 	//Once we have resolved all ${VAR}/$(command) we build cmd.Env value
@@ -130,7 +130,7 @@ func Run(environment string, options RunOptions) error {
 func Print(environment, name string, isolated, expand bool) error {
 	filename, err := FileFinder(name)
 	if err != nil {
-		return err
+		return fmt.Errorf("file finder: %w", err)
 	}
 
 	//TODO: handle other formats, e.g JSON/YML
@@ -173,7 +173,7 @@ func Print(environment, name string, isolated, expand bool) error {
 	//Replace ${VAR} and $(command) in values
 	err = context.Expand(expand)
 	if err != nil {
-		return err
+		return fmt.Errorf("context expand: %w", err)
 	}
 
 	//----- actual print action
@@ -204,7 +204,7 @@ func FileFinder(filename string) (string, error) {
 	//we want to start crawling at the current directory path
 	dirname, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get wd: %w", err)
 	}
 
 	var file string

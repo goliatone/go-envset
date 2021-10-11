@@ -39,7 +39,7 @@ func (e ErrorRunningCommand) Error() string {
 	return e.msg
 }
 
-//ErrorRunningCommand will return true if v is section not found
+//IsErrorRunningCommand will return true if v is section not found
 func IsErrorRunningCommand(v interface{}) bool {
 	_, isType := v.(ErrorRunningCommand)
 	return isType

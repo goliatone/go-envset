@@ -90,7 +90,7 @@ type EnvKey struct {
 func (e EnvFile) Load(path string) error {
 	file, err := ini.Load(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("ini load: %w", err)
 	}
 
 	e.Path = path
@@ -125,7 +125,7 @@ func (e *EnvFile) GetSection(name string) (*EnvSection, error) {
 func (e EnvFile) ToJSON() (string, error) {
 	b, err := json.Marshal(e)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("json marshall: %w", err)
 	}
 	return string(b), nil
 }
@@ -134,7 +134,7 @@ func (e EnvFile) ToJSON() (string, error) {
 func (e *EnvFile) FromJSON(path string) error {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("read file %s: %w", path, err)
 	}
 
 	return json.Unmarshal([]byte(file), &e)
@@ -164,7 +164,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 
 	filename, err := FileFinder(o.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("file finder: %w", err)
 	}
 
 	ini.PrettyEqual = false
@@ -181,7 +181,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 	// err = envFile.Load(filename)
 	cfg, err := ini.Load(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("ini load %s: %w", filename, err)
 	}
 
 	for _, sec := range cfg.Sections() {
@@ -212,8 +212,9 @@ func CreateMetadataFile(o MetadataOptions) error {
 			}
 
 			if err != nil {
-				return err
+				return fmt.Errorf("add key %s=%s: %w", k, v, err)
 			}
+
 			if sec.Key(k).Comment != "" {
 				envKey.Comment = sec.Key(k).Comment
 			}
@@ -222,7 +223,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 
 	str, err := envFile.ToJSON()
 	if err != nil {
-		return err
+		return fmt.Errorf("env file to json: %w", err)
 	}
 
 	if o.Print {
@@ -231,12 +232,12 @@ func CreateMetadataFile(o MetadataOptions) error {
 		if _, err := os.Stat(o.Filepath); os.IsNotExist(err) {
 			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
 			if err != nil {
-				return err
+				return fmt.Errorf("write file %s: %w", o.Filepath, err)
 			}
 		} else if o.Overwrite == true {
 			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
 			if err != nil {
-				return err
+				return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
 			}
 		}
 	}
