@@ -195,8 +195,10 @@ $ brew install envset
 ### Ubuntu/Debian
 
 ```console
-$ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.deb
-$ dpkg -i envset_<version>_linux_x86_64.deb
+$ export tag=<version>
+$ cd /tmp
+$ wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_${tag}_linux_x86_64.deb
+$ sudo dpkg -i envset_${tag}_linux_x86_64.deb
 ```
 
 ### CentOS/Redhat
