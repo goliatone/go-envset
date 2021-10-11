@@ -52,3 +52,16 @@ brews:
     license: "MIT"
     test: |
       system "#{bin}/envset -V"
+nfpms:
+  - id: envset 
+    replacements:
+      386: i386
+      amd64: x86_64
+    bindir: /usr/local/bin/ 
+    maintainer: goliatone <envset@goliat.one>
+    description: run commands in an environment defined using a ini configuration file.
+    homepage: https://github.com/goliatone/go-envset
+    license: "MIT"
+    formats:
+      - deb
+      - rpm
