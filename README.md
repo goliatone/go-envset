@@ -18,8 +18,8 @@ Application configuration usually are small and sensitive data such as API keys 
 
 Is as simple as calling:
 
-```
-envset development -- node server.js
+```sh
+$ envset development -- node server.js
 ```
 
 This will load the variables defined in the `[development]` section of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
@@ -42,8 +42,7 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dote
 
 Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
 
-
-<a name="myfootnote1">1</a>: You an actually require the library outside of your project with the `node -r` flag.
+<a name="node-dotenv">1</a>: You an actually require the library outside of your project with the `node -r` flag.
 
 ## Examples
 
@@ -104,6 +103,28 @@ If you want to make the variables defined in a env file to your running shell se
 
 ```sh
 $ eval $(envset development)
+```
+
+#### Required environment variables
+
+You can specify a list of required environment variables for your command using the `--required` flag or its `-R` alias.
+
+Given the following env file:
+
+```ini
+APP_MESSAGE="this is a test"
+```
+
+If you run the following command:
+
+```sh
+$ envset development --required=BOOM -R BOOM2 -- node index.js
+```
+
+`envset` will exit with an error and a message with the missing variables:
+
+```
+missing required keys: BOOM,BOOM2
 ```
 
 ### Generating an example template
@@ -244,7 +265,12 @@ Follows `rc` [standards][rcstand].
 
 The loaded files need to be valid `ini` syntax.
 
-```
+```ini
+[development]
+APP_BASE_URL=https://localhost:3003
+
+[production]
+APP_BASE_URL=https://envset.sh
 ```
 
 

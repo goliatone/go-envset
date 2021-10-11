@@ -42,8 +42,10 @@ func LocalEnv() EnvMap {
 //LoadJSON will load a json environment definition
 func LoadJSON(b []byte) (EnvMap, error) {
 	env := make(EnvMap)
-	err := json.Unmarshal(b, &env)
-	return env, err
+	if err := json.Unmarshal(b, &env); err != nil {
+		return env, fmt.Errorf("load json: %w", err)
+	}
+	return env, nil
 }
 
 //LoadIniSection returns a new EnvMap from a ini section
@@ -130,7 +132,7 @@ func interpolateCmds(str string, vars map[string]string) (string, error) {
 	//check if str has something that looks like a command $(.*+)
 	re, err := regexp.Compile(`\$\(.*\)`)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("regexp compile: %w", err)
 	}
 
 	matches := re.FindAllString(str, -1)
@@ -154,7 +156,7 @@ func interpolateCmds(str string, vars map[string]string) (string, error) {
 
 		res, err := exec.Command(args[0], args[1:]...).Output()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("exec command: %w", err)
 		}
 
 		//replace $() with value

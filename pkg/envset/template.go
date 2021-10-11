@@ -14,7 +14,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 
 	filename, err := FileFinder(name)
 	if err != nil {
-		return err
+		return fmt.Errorf("file finder %s: %w", name, err)
 	}
 
 	ini.PrettyEqual = false
@@ -22,7 +22,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 
 	cgf, err := ini.Load(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("ini load %s: %w", filename, err)
 	}
 
 	var tpl *ini.File
@@ -31,7 +31,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 	} else {
 		tpl, err = ini.LooseLoad(template)
 		if err != nil {
-			return err
+			return fmt.Errorf("ini loose load %s: %w", template, err)
 		}
 	}
 
@@ -40,7 +40,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 		if err != nil {
 			tec, err = tpl.NewSection(sec.Name())
 			if err != nil {
-				return err
+				return fmt.Errorf("tpl new section %s: %w", sec.Name(), err)
 			}
 		}
 
@@ -56,7 +56,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 				//our template has entries MY_VAR={{MY_VAR}}
 				_, err := tec.NewKey(k, fmt.Sprintf("{{%s}}", k))
 				if err != nil {
-					return err
+					return fmt.Errorf("new key %s: %w", k, err)
 				}
 			}
 
@@ -79,8 +79,9 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 
 		err = tpl.SaveTo(template) //TODO: This adds two \n at EoF?
 		if err != nil {
-			return err
+			return fmt.Errorf("tpl save to %s: %w", template, err)
 		}
 	}
+
 	return nil
 }
