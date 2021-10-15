@@ -22,6 +22,7 @@ type RunOptions struct {
 	Isolated      bool
 	Expand        bool
 	Required      []string
+	Inherit       []string
 	ExportEnvName string
 }
 
@@ -109,7 +110,12 @@ func Run(environment string, options RunOptions) error {
 	//our variables from the loaded file
 	if options.Isolated {
 		command.Env = vars
-		//we actually add our context to the os
+		//add value for any inherited env vars we have in options
+		for _, k := range options.Inherit {
+			if v := os.Getenv(k); v != "" {
+				command.Env = append(command.Env, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
 	} else {
 
 		local := LocalEnv()
