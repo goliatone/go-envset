@@ -93,6 +93,11 @@ func run(args []string, exec execCmd) {
 					Usage:   "name of exported variable with current environment name",
 					Value:   cnf.ExportEnvName,
 				},
+				&cli.StringSliceFlag{
+					Name:    "inherit",
+					Aliases: []string{"I"},
+					Usage:   "list of env vars to inherit from shell",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				//TODO: we want to support .env.local => [local]
@@ -105,6 +110,7 @@ func run(args []string, exec execCmd) {
 					Isolated:      c.Bool("isolated"),
 					Expand:        c.Bool("expand"),
 					Required:      c.StringSlice("required"),
+					Inherit:       c.StringSlice("inherit"),
 					Filename:      c.String("env-file"),
 					ExportEnvName: c.String("export-env-name"),
 				}
