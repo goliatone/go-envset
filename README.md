@@ -90,10 +90,34 @@ $ envset development -- say \${MSG}
 
 #### Inherit environment
 
+You can control environment inheritance using two flags:
+
+- `--isolated`
+- `--inherit`
+
 By default `envset` will run commands in a clean environment. Sometimes you want the executed command to access the host's environment. To do so you need to pass the `--isolated=false` flag.
 
 ```console
 $ envset development --isolated=false -- spd-say '${APP_NAME}' 
+```
+
+Some commands might rely on environment variables set on your shell, for instance if you want to `go run`:
+
+```console
+$ envset development -- go run cmd/app/server.go
+missing $GOPATH
+```
+You will get an error saying that `$GOPATH` is not available. You should run the command with the `--isolated=false`:
+
+```console
+$ envset development --isolated=false -- go run cmd/app/server.go
+```
+
+The `-inherit` flag lets you specify a list of environment variable keys that will be inherited from the parent environment.
+
+In the previous example instead of exposing the whole parent environment we could just expose `$GOPATH`:
+``console
+$ envset development -I=GOPATH -I=HOME -- go run cmd/app/server.go
 ```
 
 #### Load env file to current shell session
