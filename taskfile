@@ -270,6 +270,12 @@ function ci:clean {
 }
 
 
+##
+## -----
+##
+## install:ubuntu
+##
+## Install Ubuntu binary from GitHub releases.
 function install:ubuntu {
     tag=${1:-$(version:get)}
     cd /tmp
