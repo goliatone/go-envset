@@ -24,7 +24,7 @@ func Test_CommandHelp(t *testing.T) {
 }
 
 func Test_Version(t *testing.T) {
-	testcli.Run(bin, "-V")
+	testcli.Run(bin, "-v")
 
 	if !testcli.Success() {
 		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())

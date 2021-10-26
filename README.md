@@ -37,8 +37,8 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dote
 * Generates an example file with your current env vars to keep documentation updated.
 * Interpolation of variable using POSIX variable expansion.
 * Command expansion
-* (required) Define required variables and exit with error if not set
-* (isolated) By default the shell environment is not loaded in the context
+* Define required variables and exit with error if not set
+* By default the shell environment is not loaded in the context
 
 Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
 

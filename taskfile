@@ -270,6 +270,12 @@ function ci:clean {
 }
 
 
+##
+## -----
+##
+## install:ubuntu
+##
+## Install Ubuntu binary from GitHub releases.
 function install:ubuntu {
     tag=${1:-$(version:get)}
     cd /tmp
@@ -287,14 +293,16 @@ function help {
     echo ""
     echo "Project: ${PROJECT}"
     echo ""
-    echo "Tasks:"
-    compgen -A function | grep -v '^_' | cat -n
-    echo ""
-
+   
     prog="$0"
     me=$(basename "$prog")
     
     grep -e '^##[[:space:]]' -e '^##$' "$prog" | sed -e 's/^##//' -e "s/_PROG_/$me/" 1>&2
+    echo ""
+    echo ""
+    echo "Tasks:"
+    compgen -A function | grep -v '^_' | cat -n
+    echo ""
 }
 
 TIMEFORMAT="Task completed in %3lR"
