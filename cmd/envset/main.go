@@ -6,7 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/goliatone/go-envset/cmd/envset/environment"
+	"github.com/goliatone/go-envset/cmd/envset/metadata"
+	"github.com/goliatone/go-envset/cmd/envset/template"
 	"github.com/goliatone/go-envset/pkg/config"
+	"github.com/goliatone/go-envset/pkg/exec"
 
 	"github.com/goliatone/go-envset/pkg/envset"
 
@@ -21,8 +25,8 @@ var cnf *config.Config
 func init() {
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "version",
-		Aliases: []string{"V"},
-		Usage:   "print the application version",
+		Aliases: []string{"v"},
+		Usage:   "prints the application version",
 	}
 
 	app = &cli.App{
@@ -43,12 +47,12 @@ func init() {
 }
 
 func main() {
-	a := cliArgs(os.Args)
-	c := cmdFromArgs(os.Args)
-	run(a, c)
+	args := exec.CliArgs(os.Args)
+	cmd := exec.CmdFromArgs(os.Args)
+	run(args, cmd)
 }
 
-func run(args []string, exec execCmd) {
+func run(args []string, ecmd exec.ExecCmd) {
 	cnf, err := config.Load(".envsetrc")
 	if err != nil {
 		log.Println("Error loading configuration:", err)
@@ -58,12 +62,12 @@ func run(args []string, exec execCmd) {
 	subcommands := []*cli.Command{}
 
 	for _, env := range cnf.Environments.Name {
-		subcommands = append(subcommands, GetEnvironmentCommand(env, exec, cnf))
+		subcommands = append(subcommands, environment.GetCommand(env, ecmd, cnf))
 	}
 
-	appendCommand(GetMetadataCommand(cnf))
+	appendCommand(metadata.GetCommand(cnf))
 
-	appendCommand(GetTemplateCommand(cnf))
+	appendCommand(template.GetCommand(cnf))
 
 	app.Commands = append(app.Commands, subcommands...)
 
@@ -109,8 +113,8 @@ func run(args []string, exec execCmd) {
 		env := c.String("env")
 
 		o := envset.RunOptions{
-			Cmd:      exec.Cmd,
-			Args:     exec.Args,
+			Cmd:      ecmd.Cmd,
+			Args:     ecmd.Args,
 			Expand:   c.Bool("expand"),
 			Isolated: c.Bool("isolated"),
 			Filename: c.String("env-file"),
@@ -118,7 +122,7 @@ func run(args []string, exec execCmd) {
 		//Run if we have something like this:
 		// envset --env-file=.env -- node index.js
 		// envset --env-file=.envset --env=development -- node index.js
-		if exec.Cmd != "" && o.Filename != cnf.Filename {
+		if ecmd.Cmd != "" && o.Filename != cnf.Filename {
 			return envset.Run(env, o)
 		}
 
@@ -144,44 +148,4 @@ func run(args []string, exec execCmd) {
 
 func appendCommand(command *cli.Command) {
 	app.Commands = append(app.Commands, command)
-}
-
-type execCmd struct {
-	Cmd  string
-	Args []string
-}
-
-func cmdFromArgs(args []string) execCmd {
-	cmd := ""
-	idx := 0
-	a := make([]string, 0)
-
-	for i, v := range args {
-		if v == "--" {
-			idx = i + 1
-			break
-		}
-	}
-
-	if idx > 0 && len(args) >= idx {
-		cmd = args[idx]
-		a = args[idx+1:]
-	}
-
-	return execCmd{
-		Cmd:  cmd,
-		Args: a,
-	}
-}
-
-func cliArgs(args []string) []string {
-	o := make([]string, 0)
-	for _, v := range args {
-		if v == "--" {
-			break
-		}
-		o = append(o, v)
-	}
-
-	return o
 }
