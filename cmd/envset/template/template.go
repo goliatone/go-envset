@@ -1,4 +1,4 @@
-package main
+package template
 
 import (
 	"os"
@@ -9,7 +9,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func GetTemplateCommand(cnf *config.Config) *cli.Command {
+//GetCommand exports template command
+func GetCommand(cnf *config.Config) *cli.Command {
 	return &cli.Command{
 		//TODO: This actually should load a template file and resolve it using the context.
 		//Default template should generate envset.example
