@@ -1,4 +1,4 @@
-package main
+package metadata
 
 import (
 	"fmt"
@@ -11,9 +11,9 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-//GetMetadataCommand returns a new cli.Command for the
+//GetCommand returns a new cli.Command for the
 //metadata command.
-func GetMetadataCommand(cnf *config.Config) *cli.Command {
+func GetCommand(cnf *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:        "metadata",
 		Usage:       "generate a metadata file from environment file",
