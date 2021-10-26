@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"gopkg.in/ini.v1"
 )
@@ -22,8 +23,9 @@ type EnvFile struct {
 	Filename string    `json:"envfile,omitempty"`
 	//TODO: should we have https, git and id? if someone checks using
 	//https and other ssh this will change!!
-	Project string `json:"project,omitempty"`
-	Alg     string `json:"algorithm"`
+	Project string    `json:"project,omitempty"`
+	Alg     string    `json:"algorithm"`
+	Date    time.Time `json:"date"`
 	//TODO: make custom marshaller to ignore DEFAULT section
 	Sections []*EnvSection `json:"sections"`
 }
@@ -176,6 +178,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 		Filename: o.Name,
 		Project:  o.Project,
 		Sections: make([]*EnvSection, 0),
+		Date:     time.Now().UTC(),
 	}
 
 	// err = envFile.Load(filename)
