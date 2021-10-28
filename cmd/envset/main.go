@@ -65,9 +65,9 @@ func run(args []string, ecmd exec.ExecCmd) {
 		subcommands = append(subcommands, environment.GetCommand(env, ecmd, cnf))
 	}
 
-	appendCommand(metadata.GetCommand(cnf))
+	app.Commands = append(app.Commands, metadata.GetCommand(cnf))
 
-	appendCommand(template.GetCommand(cnf))
+	app.Commands = append(app.Commands, template.GetCommand(cnf))
 
 	app.Commands = append(app.Commands, subcommands...)
 
@@ -144,8 +144,4 @@ func run(args []string, ecmd exec.ExecCmd) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func appendCommand(command *cli.Command) {
-	app.Commands = append(app.Commands, command)
 }
