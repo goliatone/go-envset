@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
+	"github.com/gosuri/uitable"
+	colors "github.com/logrusorgru/aurora/v3"
 	"github.com/tcnksm/go-gitconfig"
 	"github.com/urfave/cli/v2"
 )
@@ -95,12 +99,27 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						Usage: "print the comparison results to stdout",
 						Value: cnf.Meta.Print,
 					},
+					&cli.BoolFlag{
+						Name:  "json",
+						Usage: "print the comparison results to stdout in JSON format",
+						Value: cnf.Meta.AsJSON,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					print := c.Bool("print")
+					json := c.Bool("json")
 					name := c.String("section")
-					source := c.Args().Get(0)
-					target := c.Args().Get(1)
+
+					var source string
+					var target string
+
+					if c.Args().Len() == 1 {
+						source, _ = envset.FileFinder(filepath.Join(cnf.Meta.Dir, cnf.Meta.File))
+						target = c.Args().Get(0)
+					} else {
+						source = c.Args().Get(0)
+						target = c.Args().Get(1)
+					}
 
 					src := envset.EnvFile{}
 					src.FromJSON(source)
@@ -122,11 +141,15 @@ func GetCommand(cnf *config.Config) *cli.Command {
 					s3.Name = name
 
 					if s3.IsEmpty() == false {
-						if print {
+						if print && !json {
+							prettyPrint(s3)
+							return cli.Exit("", 1)
+						} else if print && json {
 							j, err := s3.ToJSON()
 							if err != nil {
 								return cli.Exit(err, 1)
 							}
+
 							return cli.Exit(j, 1)
 						}
 						//Exit with error e.g. to fail CI
@@ -138,4 +161,35 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			},
 		},
 	}
+}
+
+func prettyPrint(diff envset.EnvSection) {
+
+	sort.Slice(diff.Keys, func(p, q int) bool {
+		return diff.Keys[p].Comment > diff.Keys[q].Comment
+	})
+
+	fmt.Println("")
+	table := uitable.New()
+	table.MaxColWidth = 50
+	// table.Wrap = true
+
+	table.AddRow(
+		colors.Bold("STATUS").Underline(),
+		colors.Bold("ENV KEY").Underline(),
+		colors.Bold("HASH").Underline(),
+	)
+	table.AddRow()
+
+	for _, k := range diff.Keys {
+		if strings.Contains(k.Comment, "different") {
+			table.AddRow("🚨 Changed", k.Name, k.Hash)
+		} else if strings.Contains(k.Comment, "extra") {
+			table.AddRow("👶 Added", k.Name, k.Hash)
+		} else if strings.Contains(k.Comment, "missing") {
+			table.AddRow("👻 Removed", k.Name, k.Hash)
+		}
+	}
+	fmt.Println(table)
+	fmt.Println("")
 }
