@@ -18,6 +18,7 @@ export_environment=APP_ENV
 dir=.meta
 file=data.json
 print=true
+json=false
 
 [template]
 path=.
@@ -30,6 +31,7 @@ name=production
 name=development
 `)
 
+//Config has the rc config options
 type Config struct {
 	Name         string
 	Filename     string `ini:"filename"`
@@ -41,9 +43,10 @@ type Config struct {
 	Isolated      bool      `ini:"isolated"`
 	ExportEnvName string    `ini:"export_environment"`
 	Meta          struct {
-		Dir   string `ini:"dir"`
-		File  string `ini:"file"`
-		Print bool   `ini:"print"`
+		Dir    string `ini:"dir"`
+		File   string `ini:"file"`
+		Print  bool   `ini:"print"`
+		AsJSON bool   `ini:"json"`
 	} `ini:"metadata"`
 	Template struct {
 		Path string `ini:"path"`
