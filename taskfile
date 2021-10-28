@@ -30,7 +30,7 @@ PATH=./src/bin:$PATH
 ## Run go tests
 ##
 function test:run {
-    go test ./...
+    go test ./... -v
 }
 
 ## ########################################
@@ -61,7 +61,7 @@ function release:build {
 
     mkdir -p ${RELBIN}
 
-    LDFLAGS="-X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
+    LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
     
     echo "go build -ldflags ${LDFLAGS}"
 
