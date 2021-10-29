@@ -91,6 +91,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "section",
+						Aliases:  []string{"s"},
 						Usage:    "env file section",
 						Required: true,
 					},
@@ -142,7 +143,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 
 					if s3.IsEmpty() == false {
 						if print && !json {
-							prettyPrint(s3)
+							prettyPrint(s3, source, target)
 							return cli.Exit("", 1)
 						} else if print && json {
 							j, err := s3.ToJSON()
@@ -163,13 +164,14 @@ func GetCommand(cnf *config.Config) *cli.Command {
 	}
 }
 
-func prettyPrint(diff envset.EnvSection) {
+func prettyPrint(diff envset.EnvSection, source, target string) {
 
 	sort.Slice(diff.Keys, func(p, q int) bool {
 		return diff.Keys[p].Comment > diff.Keys[q].Comment
 	})
 
 	fmt.Println("")
+
 	table := uitable.New()
 	table.MaxColWidth = 50
 	// table.Wrap = true
@@ -181,15 +183,41 @@ func prettyPrint(diff envset.EnvSection) {
 	)
 	table.AddRow()
 
+	mi := 0
+	mr := 0
+	dv := 0
+
 	for _, k := range diff.Keys {
-		if strings.Contains(k.Comment, "different") {
-			table.AddRow("🚨 Changed", k.Name, k.Hash)
+
+		if strings.Contains(k.Comment, "missing") {
+			mi++
+			table.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "extra") {
-			table.AddRow("👶 Added", k.Name, k.Hash)
-		} else if strings.Contains(k.Comment, "missing") {
-			table.AddRow("👻 Removed", k.Name, k.Hash)
+			mr++
+			table.AddRow("🌱 Added", k.Name, strmax(k.Hash, 12, "..."))
+		} else if strings.Contains(k.Comment, "different") {
+			dv++
+			table.AddRow("❓ Different", k.Name, strmax(k.Hash, 12, "..."))
 		}
 	}
 	fmt.Println(table)
+
 	fmt.Println("")
+	fmt.Printf("• %s: %s\n", colors.Bold("source"), source)
+	fmt.Printf("• %s: %s\n", colors.Bold("target"), target)
+	fmt.Printf(
+		"\n👻 Missing in %s (%d) ¦ 🌱 Missing in %s (%d) ¦ ❓ Different values (%d)\n\n",
+		colors.Bold("source"),
+		mr,
+		colors.Bold("target"),
+		mi,
+		dv,
+	)
+}
+
+func strmax(str string, l int, suffix string) string {
+	if len(str) <= l {
+		return str
+	}
+	return str[:l] + suffix
 }
