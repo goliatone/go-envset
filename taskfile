@@ -25,12 +25,17 @@ PATH=./src/bin:$PATH
 ## ########################################
 
 ## -----
-## test:run
+## dev:test
 ## 
 ## Run go tests
 ##
-function test:run {
+function dev:test {
     go test ./... -v
+}
+
+function wrk:dev {
+    gvm use go1.17
+    gvm pkgset use envse
 }
 
 ## ########################################
