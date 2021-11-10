@@ -8,6 +8,7 @@ import (
 
 	"github.com/goliatone/go-envset/cmd/envset/environment"
 	"github.com/goliatone/go-envset/cmd/envset/metadata"
+	"github.com/goliatone/go-envset/cmd/envset/rc"
 	"github.com/goliatone/go-envset/cmd/envset/template"
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/exec"
@@ -64,6 +65,8 @@ func run(args []string, ecmd exec.ExecCmd) {
 	for _, env := range cnf.Environments.Name {
 		subcommands = append(subcommands, environment.GetCommand(env, ecmd, cnf))
 	}
+
+	app.Commands = append(app.Commands, rc.GetCommand(cnf))
 
 	app.Commands = append(app.Commands, metadata.GetCommand(cnf))
 
