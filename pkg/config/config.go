@@ -9,6 +9,7 @@ import (
 )
 
 var config = []byte(`
+# Default configuration
 filename=.envset
 expand=true
 isolated=true
@@ -80,4 +81,10 @@ func Load(name string) (*Config, error) {
 	}
 
 	return c, nil
+}
+
+//GetDefaultConfig returns the default
+//config string
+func GetDefaultConfig() string {
+	return string(config)
 }
