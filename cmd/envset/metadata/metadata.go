@@ -155,6 +155,9 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						}
 						//Exit with error e.g. to fail CI
 						return cli.Exit("Metadata test failed!", 1)
+					} else if print && !json {
+						prettyOk(source, target)
+						return cli.Exit("", 0)
 					}
 
 					return nil
@@ -190,11 +193,10 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 			if mi == 0 {
 
 				mit.AddRow(
-					"  "+colors.Bold("STATUS").Underline().String(),
+					"   "+colors.Bold("STATUS").Underline().String(),
 					colors.Bold("ENV KEY").Underline(),
 					colors.Bold("HASH").Underline(),
 				)
-				// mit.AddRow()
 			}
 			mi++
 			mit.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
@@ -202,35 +204,33 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 			if mr == 0 {
 
 				mrt.AddRow(
-					"  "+colors.Bold("STATUS").Underline().String(),
+					"   "+colors.Bold("STATUS").Underline().String(),
 					colors.Bold("ENV KEY").Underline(),
 					colors.Bold("HASH").Underline(),
 				)
-				// mrt.AddRow()
 			}
 			mr++
-			mrt.AddRow("🌱 Added", k.Name, strmax(k.Hash, 12, "..."))
+			mrt.AddRow("🌱 Missing", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "different") {
 			if dv == 0 {
 				dvt.AddRow(
-					"  "+colors.Bold("STATUS").Underline().String(),
+					"   "+colors.Bold("STATUS").Underline().String(),
 					colors.Bold("ENV KEY").Underline(),
 					colors.Bold("HASH").Underline(),
 				)
-				// dvt.AddRow()
 			}
 			dv++
 			dvt.AddRow("❓ Different", k.Name, strmax(k.Hash, 12, "..."))
 		}
 	}
 
-	fmt.Printf("• %s: %s\n", colors.Bold("source"), source)
+	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
 	fmt.Println(mit)
 
-	fmt.Printf("\n\n• %s: %s\n", colors.Bold("target"), target)
+	fmt.Printf("\n\n•  %s: %s\n", colors.Bold("target"), target)
 	fmt.Println(mrt)
 
-	fmt.Printf("\n\n• %s\n", colors.Bold("different values"))
+	fmt.Printf("\n\n•  %s\n", colors.Bold("different values"))
 	fmt.Println(dvt)
 
 	fmt.Println("")
@@ -250,4 +250,10 @@ func strmax(str string, l int, suffix string) string {
 		return str
 	}
 	return str[:l] + suffix
+}
+
+func prettyOk(source, target string) {
+	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
+	fmt.Printf("•  %s: %s\n", colors.Bold("target"), target)
+	fmt.Printf("🚀 %s\n", colors.Bold("All good!").Green())
 }
