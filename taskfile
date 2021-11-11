@@ -286,6 +286,10 @@ function install:ubuntu {
     cd /tmp
     wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_${tag}_linux_x86_64.deb
     sudo dpkg -i envset_${tag}_linux_x86_64.deb
+    sleep 1
+    echo ""
+    echo $(envset -v)
+    echo ""
 }
 
 ##########################################
