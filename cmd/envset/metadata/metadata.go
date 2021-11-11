@@ -236,7 +236,7 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	fmt.Println("")
 
 	fmt.Printf(
-		"\n👻 Missing in %s (%d) ¦ 🌱 Missing in %s (%d) ¦ ❓ Different values (%d)\n\n",
+		"\n👻 Missing in %s (%d) | 🌱 Missing in %s (%d) | ❓ Different values (%d)\n\n",
 		colors.Bold("source"),
 		colors.Red(mr).Bold(),
 		colors.Bold("target"),
