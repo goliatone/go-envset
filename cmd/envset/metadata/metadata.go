@@ -172,46 +172,76 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 
 	fmt.Println("")
 
-	table := uitable.New()
-	table.MaxColWidth = 50
-	// table.Wrap = true
+	mit := uitable.New()
+	mit.MaxColWidth = 50
 
-	table.AddRow(
-		colors.Bold("STATUS").Underline(),
-		colors.Bold("ENV KEY").Underline(),
-		colors.Bold("HASH").Underline(),
-	)
-	table.AddRow()
+	mrt := uitable.New()
+	mrt.MaxColWidth = 50
+
+	dvt := uitable.New()
+	dvt.MaxColWidth = 50
 
 	mi := 0
 	mr := 0
 	dv := 0
 
 	for _, k := range diff.Keys {
-
 		if strings.Contains(k.Comment, "missing") {
+			if mi == 0 {
+
+				mit.AddRow(
+					"  "+colors.Bold("STATUS").Underline().String(),
+					colors.Bold("ENV KEY").Underline(),
+					colors.Bold("HASH").Underline(),
+				)
+				// mit.AddRow()
+			}
 			mi++
-			table.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
+			mit.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "extra") {
+			if mr == 0 {
+
+				mrt.AddRow(
+					"  "+colors.Bold("STATUS").Underline().String(),
+					colors.Bold("ENV KEY").Underline(),
+					colors.Bold("HASH").Underline(),
+				)
+				// mrt.AddRow()
+			}
 			mr++
-			table.AddRow("🌱 Added", k.Name, strmax(k.Hash, 12, "..."))
+			mrt.AddRow("🌱 Added", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "different") {
+			if dv == 0 {
+				dvt.AddRow(
+					"  "+colors.Bold("STATUS").Underline().String(),
+					colors.Bold("ENV KEY").Underline(),
+					colors.Bold("HASH").Underline(),
+				)
+				// dvt.AddRow()
+			}
 			dv++
-			table.AddRow("❓ Different", k.Name, strmax(k.Hash, 12, "..."))
+			dvt.AddRow("❓ Different", k.Name, strmax(k.Hash, 12, "..."))
 		}
 	}
-	fmt.Println(table)
+
+	fmt.Printf("• %s: %s\n", colors.Bold("source"), source)
+	fmt.Println(mit)
+
+	fmt.Printf("\n\n• %s: %s\n", colors.Bold("target"), target)
+	fmt.Println(mrt)
+
+	fmt.Printf("\n\n• %s\n", colors.Bold("different values"))
+	fmt.Println(dvt)
 
 	fmt.Println("")
-	fmt.Printf("• %s: %s\n", colors.Bold("source"), source)
-	fmt.Printf("• %s: %s\n", colors.Bold("target"), target)
+
 	fmt.Printf(
 		"\n👻 Missing in %s (%d) ¦ 🌱 Missing in %s (%d) ¦ ❓ Different values (%d)\n\n",
 		colors.Bold("source"),
-		mr,
+		colors.Red(mr).Bold(),
 		colors.Bold("target"),
-		mi,
-		dv,
+		colors.Red(mi).Bold(),
+		colors.Yellow(dv).Bold(),
 	)
 }
 
