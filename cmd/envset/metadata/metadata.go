@@ -253,7 +253,7 @@ func strmax(str string, l int, suffix string) string {
 }
 
 func prettyOk(source, target string) {
-	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
+	fmt.Printf("\n•  %s: %s\n", colors.Bold("source"), source)
 	fmt.Printf("•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Printf("🚀 %s\n", colors.Bold("All good!").Green())
+	fmt.Printf("🚀 %s\n\n", colors.Bold("All good!").Green())
 }
