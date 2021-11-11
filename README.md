@@ -196,6 +196,31 @@ Note that `envset metadata compare` will output to stderr in the case that both 
 $ envset metadata compare --section=development .metadata/data.json staging-metadata.json 2>&1 | jq . 
 ```
 
+Pretty output
+
+```console
+
+• source: .meta/data.json
+STATUS          ENV KEY         HASH
+
+👻 Missing      DIFFERENT_VALUE XX7348032937...
+
+
+• target: .meta/env.staging.json
+STATUS          ENV KEY         HASH
+
+🌱 Added        EMPTY_THING     fb7348032937...
+
+
+❓ Different    APP_MESSAGE     2e9975854897...
+❓ Different    NEW_THING       8896f09440c1...
+
+
+
+
+👻 Missing in source (1) ¦ 🌱 Missing in target (1) ¦ ❓ Different values (2)
+```
+
 ## Installation
 
 ### macOS
