@@ -105,11 +105,17 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						Usage: "print the comparison results to stdout in JSON format",
 						Value: cnf.Meta.AsJSON,
 					},
+					&cli.StringSliceFlag{
+						Name:    "ignore",
+						Aliases: []string{"I"},
+						Usage:   "list of key names that are ignored",
+					},
 				},
 				Action: func(c *cli.Context) error {
 					print := c.Bool("print")
 					json := c.Bool("json")
 					name := c.String("section")
+					ignored := c.StringSlice("ignore")
 
 					var source string
 					var target string
@@ -139,7 +145,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
 					}
 
-					s3 := envset.CompareSections(*s1, *s2)
+					s3 := envset.CompareSections(*s1, *s2, ignored)
 					s3.Name = name
 
 					if s3.IsEmpty() == false {
@@ -225,10 +231,10 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	}
 
 	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
-	fmt.Println(tableOrMessage(mit.String(), colors.Green("👍 No source environment variables are missing").String()))
+	fmt.Println(tableOrMessage(mit.String(), colors.Green("👍 source is not missing environment variables").String()))
 
 	fmt.Printf("\n\n•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Println(tableOrMessage(mrt.String(), colors.Green("👍 No target environment variables are extra").String()))
+	fmt.Println(tableOrMessage(mrt.String(), colors.Green("👍 target has no extra environment variables").String()))
 
 	fmt.Printf("\n\n•  %s\n", colors.Bold("different values"))
 	fmt.Println(tableOrMessage(dvt.String(), colors.Green("👍 All variables have same values").String()))
