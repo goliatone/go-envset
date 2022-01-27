@@ -278,11 +278,20 @@ func hmacSha256HashValue(value, secret string) (string, error) {
 // }
 
 //CompareSections will compare two sections and return diff
-func CompareSections(s1, s2 EnvSection) EnvSection {
+func CompareSections(s1, s2 EnvSection, ignored []string) EnvSection {
+	ignore := make(map[string]bool)
+	for _, v := range ignored {
+		ignore[v] = true
+	}
+
 	diff := EnvSection{}
 	seen := make(map[string]int)
 
 	for i, k1 := range s1.Keys {
+		if ok := ignore[k1.Name]; ok {
+			continue
+		}
+
 		seen[k1.Name] = -1
 		for _, k2 := range s2.Keys {
 			if k1.Name == k2.Name {
@@ -302,6 +311,10 @@ func CompareSections(s1, s2 EnvSection) EnvSection {
 	}
 
 	for _, k2 := range s2.Keys {
+		if ok := ignore[k2.Name]; ok {
+			continue
+		}
+
 		if _, ok := seen[k2.Name]; ok == false {
 			k2.Comment = "missing in source"
 			diff.Keys = append(diff.Keys, k2)
