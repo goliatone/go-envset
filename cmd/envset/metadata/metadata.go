@@ -225,13 +225,13 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	}
 
 	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
-	fmt.Println(mit)
+	fmt.Println(tableOrMessage(mit.String(), colors.Green("👍 No source environment variables are missing").String()))
 
 	fmt.Printf("\n\n•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Println(mrt)
+	fmt.Println(tableOrMessage(mrt.String(), colors.Green("👍 No target environment variables are extra").String()))
 
 	fmt.Printf("\n\n•  %s\n", colors.Bold("different values"))
-	fmt.Println(dvt)
+	fmt.Println(tableOrMessage(dvt.String(), colors.Green("👍 All variables have same values").String()))
 
 	fmt.Println("")
 
@@ -245,6 +245,13 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	)
 }
 
+func tableOrMessage(tbl, message string) string {
+	if tbl == "" {
+		return message
+	}
+	return tbl
+}
+
 func strmax(str string, l int, suffix string) string {
 	if len(str) <= l {
 		return str
@@ -255,7 +262,7 @@ func strmax(str string, l int, suffix string) string {
 func prettyOk(source, target string) {
 	fmt.Printf("\n•  %s: %s\n", colors.Bold("source"), source)
 	fmt.Printf("•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Printf("🚀 %s\n\n", colors.Bold("All good!").Green())
+	fmt.Printf("\n🚀 %s\n\n", colors.Bold("All good!").Green())
 }
 
 func makeRelative(src string) string {
