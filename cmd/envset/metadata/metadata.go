@@ -116,6 +116,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 
 					if c.Args().Len() == 1 {
 						source, _ = envset.FileFinder(filepath.Join(cnf.Meta.Dir, cnf.Meta.File))
+						source = makeRelative(source)
 						target = c.Args().Get(0)
 					} else {
 						source = c.Args().Get(0)
@@ -202,7 +203,6 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 			mit.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "extra") {
 			if mr == 0 {
-
 				mrt.AddRow(
 					"   "+colors.Bold("STATUS").Underline().String(),
 					colors.Bold("ENV KEY").Underline(),
@@ -256,4 +256,12 @@ func prettyOk(source, target string) {
 	fmt.Printf("\n•  %s: %s\n", colors.Bold("source"), source)
 	fmt.Printf("•  %s: %s\n", colors.Bold("target"), target)
 	fmt.Printf("🚀 %s\n\n", colors.Bold("All good!").Green())
+}
+
+func makeRelative(src string) string {
+	path, err := os.Getwd()
+	if err != nil {
+		return src
+	}
+	return strings.TrimPrefix(strings.TrimPrefix(src, path), "/")
 }
