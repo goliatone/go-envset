@@ -4,7 +4,46 @@
 
 ---
 
-## Environment level configuration
+<!-- vscode-markdown-toc -->
+* [Environment level configuration](#Environmentlevelconfiguration)
+* [Similar Tools](#SimilarTools)
+* [Examples](#Examples)
+	* [Executing a command](#Executingacommand)
+		* [Variable substitution](#Variablesubstitution)
+		* [Inherit environment](#Inheritenvironment)
+		* [Load env file to current shell session](#Loadenvfiletocurrentshellsession)
+		* [Required environment variables](#Requiredenvironmentvariables)
+	* [Generating an example template](#Generatinganexampletemplate)
+	* [Support for .env files](#Supportfor.envfiles)
+	* [Metadata](#Metadata)
+	* [Metadata Compare](#MetadataCompare)
+		* [Ignore Variables](#IgnoreVariables)
+* [Installation](#Installation)
+	* [macOS](#macOS)
+	* [Ubuntu/Debian](#UbuntuDebian)
+	* [CentOS/Redhat](#CentOSRedhat)
+	* [Manual Install](#ManualInstall)
+* [Documentation](#Documentation)
+	* [Commands](#Commands)
+	* [Variable Expansion](#VariableExpansion)
+	* [Commands](#Commands-1)
+* [.envset file](#envsetfile)
+* [.envsetrc](#envsetrc)
+	* [Configuration](#Configuration)
+	* [Configuration Syntax](#ConfigurationSyntax)
+	* [Ignored And Required Sections](#IgnoredAndRequiredSections)
+* [License](#License)
+
+<!-- vscode-markdown-toc-config
+	numbering=false
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+---
+
+## <a name='Environmentlevelconfiguration'></a>Environment level configuration
 
 Application configuration is (usually) specific to an environment and will change between different build environments- e.g. app secrets for a staging environment are different than your production secrets.
 
@@ -26,7 +65,7 @@ This will load the variables defined in the `[development]` section of a local `
 
 See the [examples](#examples) section for more details.
 
-## Similar Tools
+## <a name='SimilarTools'></a>Similar Tools
 
 Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dotenv](https://github.com/bkeepers/dotenv).
 
@@ -40,13 +79,13 @@ Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dote
 * Define required variables and exit with error if not set
 * By default the shell environment is not loaded in the context
 
-Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment. 
+Instead of having an `.env` file per environment you can have one single `.envset` file with one section per environment.
 
 <a name="node-dotenv">1</a>: You an actually require the library outside of your project with the `node -r` flag.
 
-## Examples
+## <a name='Examples'></a>Examples
 
-### Executing a command
+### <a name='Executingacommand'></a>Executing a command
 
 An **.envset** file could look like this:
 
@@ -77,7 +116,7 @@ To use it, simply prefix the call to your program with `envset` and the name of 
 $ envset development -- node app.js
 ```
 
-#### Variable substitution
+#### <a name='Variablesubstitution'></a>Variable substitution
 
 You can execute commands that use environment variables in the command arguments.
 
@@ -85,10 +124,10 @@ Is important to note that you need to scape the variable so that it is not repla
 
 ```sh
 $ envset development -- say '${MSG}'
-$ envset development -- say \${MSG} 
+$ envset development -- say \${MSG}
 ```
 
-#### Inherit environment
+#### <a name='Inheritenvironment'></a>Inherit environment
 
 You can control environment inheritance using two flags:
 
@@ -98,7 +137,7 @@ You can control environment inheritance using two flags:
 By default `envset` will run commands in a clean environment. Sometimes you want the executed command to access the host's environment. To do so you need to pass the `--isolated=false` flag.
 
 ```console
-$ envset development --isolated=false -- spd-say '${APP_NAME}' 
+$ envset development --isolated=false -- spd-say '${APP_NAME}'
 ```
 
 Some commands might rely on environment variables set on your shell, for instance if you want to `go run`:
@@ -116,11 +155,11 @@ $ envset development --isolated=false -- go run cmd/app/server.go
 The `-inherit` flag lets you specify a list of environment variable keys that will be inherited from the parent environment.
 
 In the previous example instead of exposing the whole parent environment we could just expose `$GOPATH`:
-``console
+```console
 $ envset development -I=GOPATH -I=HOME -- go run cmd/app/server.go
 ```
 
-#### Load env file to current shell session
+#### <a name='Loadenvfiletocurrentshellsession'></a>Load env file to current shell session
 
 If you want to make the variables defined in a env file to your running shell session use something like the following snippet.
 
@@ -129,7 +168,7 @@ If you want to make the variables defined in a env file to your running shell se
 $ eval $(envset development)
 ```
 
-#### Required environment variables
+#### <a name='Requiredenvironmentvariables'></a>Required environment variables
 
 You can specify a list of required environment variables for your command using the `--required` flag or its `-R` alias.
 
@@ -151,7 +190,7 @@ $ envset development --required=BOOM -R BOOM2 -- node index.js
 missing required keys: BOOM,BOOM2
 ```
 
-### Generating an example template
+### <a name='Generatinganexampletemplate'></a>Generating an example template
 
 If we run the `envset template` command with the previous **.envset** file we generate a **envset.example** file:
 
@@ -176,7 +215,7 @@ NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
 ```
 
 
-### Support for .env files
+### <a name='Supportfor.envfiles'></a>Support for .env files
 
 You can load other environment files like `.env` files:
 
@@ -184,47 +223,77 @@ You can load other environment files like `.env` files:
 $ envset --env-file=.env -- node index.js
 ```
 
-### Metadata
+### <a name='Metadata'></a>Metadata
 
 The `metadata` command will generate a JSON file capturing the values of the provided env file.
 
-### Metadata Compare
+### <a name='MetadataCompare'></a>Metadata Compare
 
-Note that `envset metadata compare` will output to stderr in the case that both files do not match.
+Note that `envset metadata compare` will output to **stderr** in the case that both files do not match.
 
 ```console
-$ envset metadata compare --section=development .metadata/data.json staging-metadata.json 2>&1 | jq . 
+$ envset metadata compare --section=development .meta/data.json .meta/prod.data.json
+```
+
+You can omit the path to the local source metadata file and only pass the remote file you want to compare against, it will use the configured path:
+
+```
+$ envset metadata compare --section=development .meta/prod.data.json
 ```
 
 Pretty output
 
 ```console
-
-• source: .meta/data.json
-STATUS          ENV KEY         HASH
-
-👻 Missing      DIFFERENT_VALUE XX7348032937...
+•  source: .meta/data.json
+   STATUS       ENV KEY         HASH
+👻 Missing      MY_APP_NAME     6d22b97ab7dd...
 
 
 • target: .meta/env.staging.json
-STATUS          ENV KEY         HASH
+👍 target has no extra environment variables
 
-🌱 Added        EMPTY_THING     fb7348032937...
-
-
+•  different values
+   STATUS       ENV KEY         HASH
 ❓ Different    APP_MESSAGE     2e9975854897...
 ❓ Different    NEW_THING       8896f09440c1...
-
-
 
 
 👻 Missing in source (1) ¦ 🌱 Missing in target (1) ¦ ❓ Different values (2)
 ```
 
-## Installation
+To have JSON output you can pass the `--json` flag:
 
-### macOS
-<!-- 
+```console
+$ envset metadata compare --section=development .meta/data.json .meta/prod.data.json 2>&1 | jq .
+{
+  "name": "development",
+  "values": [
+    {
+      "key": "MY_APP_SECRET",
+      "hash": "aca50d5cf2f285a5a5c5469c8fe9df2540b9bea6905a23461b",
+      "comment": "different hash value"
+    },
+    {
+      "key": "MY_APP_NAME",
+      "hash": "6d22b97ab7dd929f1b30099dcacd3a8f883373cefbe4a59a05",
+      "comment": "missing in source"
+    }
+  ]
+}
+```
+
+#### <a name='IgnoreVariables'></a>Ignore Variables
+
+When comparing metadata files you can optionally ignore some variables that you know will be different or will be missing. You can do pass `--ignore` or `-I` flag with the variable name:
+
+```console
+$ envset metadata compare --section=development -I IGNORED_VAR .meta/prod.data.json
+```
+
+## <a name='Installation'></a>Installation
+
+### <a name='macOS'></a>macOS
+<!--
 TODO: List how to install in all different platforms
 -->
 
@@ -241,7 +310,7 @@ $ brew install envset
 ```
 
 
-### Ubuntu/Debian
+### <a name='UbuntuDebian'></a>Ubuntu/Debian
 
 ```console
 $ export tag=<version>
@@ -250,13 +319,13 @@ $ wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_$
 $ sudo dpkg -i envset_${tag}_linux_x86_64.deb
 ```
 
-### CentOS/Redhat
+### <a name='CentOSRedhat'></a>CentOS/Redhat
 
 ```console
 $ yum localinstall https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.rpm
 ```
 
-### Manual Install
+### <a name='ManualInstall'></a>Manual Install
 
 ```console
 $ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.tar.gz
@@ -264,7 +333,7 @@ $ tar -C /usr/bin/ -xzvf envset_<version>_linux_x86_64.tar.gz envset
 $ chmod +x /usr/bin/envset
 ```
 
-## Documentation
+## <a name='Documentation'></a>Documentation
 
 `envset` will look for a file defining different environments and make them available as commands.
 
@@ -276,7 +345,7 @@ APP_BASE_URL=https://localhost:3003
 APP_BASE_URL=https://envset.sh
 ```
 
-### Commands
+### <a name='Commands'></a>Commands
 
 The following is a list of the available commands:
 
@@ -284,9 +353,9 @@ The following is a list of the available commands:
     * compare
 * template
 
-### Variable Expansion
+### <a name='VariableExpansion'></a>Variable Expansion
 
-`envset` can interpolate variables using POSIX variable expansion in both the loaded environment file and the running command arguments. 
+`envset` can interpolate variables using POSIX variable expansion in both the loaded environment file and the running command arguments.
 
 ```ini
 [development]
@@ -298,14 +367,14 @@ CLIENT_ID=${CLIENT_NAME}.devices.local
 $ envset development -- node cli.js --user '${USER}'
 ```
 
-### Commands
+### <a name='Commands-1'></a>Commands
 
 If you type `envset` without arguments it will display help and a list of supported environment names.
 
-## .envset file
+## <a name='envsetfile'></a>.envset file
 
 
-## .envsetrc
+## <a name='envsetrc'></a>.envsetrc
 You can create an `.envsetrc` file with configuration options for `envset`.
 
 The default `.envsetrc` looks like this:
@@ -331,12 +400,12 @@ name=production
 name=development
 ```
 
-### Configuration
+### <a name='Configuration'></a>Configuration
 
 Follows `rc` [standards][rcstand].
 
 
-### Configuration Syntax
+### <a name='ConfigurationSyntax'></a>Configuration Syntax
 
 The loaded files need to be valid `ini` syntax.
 
@@ -348,9 +417,23 @@ APP_BASE_URL=https://localhost:3003
 APP_BASE_URL=https://envset.sh
 ```
 
+### <a name='IgnoredAndRequiredSections'></a>Ignored And Required Sections
 
-## License
-Copyright (c) 2015-2021 goliatone  
+You can add a `[required]` or `[ignored]` section in your `.envsetrc`:
+
+```ini
+[ignored]
+development=MY_APP_NAME
+development=MY_APP_SECRET
+staging=MY_IGNORED_STAGING
+
+[required]
+development=MY_REQUIRED_APP_NAME
+staging=MY_REQUIRED_VAR_STAGING
+```
+
+## <a name='License'></a>License
+Copyright (c) 2015-2022 goliatone
 Licensed under the MIT license.
 
 
@@ -365,8 +448,8 @@ Licensed under the MIT license.
 
 
 
-<!-- 
-Add self-update 
+<!--
+Add self-update
 * [go-update](https://github.com/tj/go-update)
 * [go-update](https://github.com/inconshreveable/go-update)
 * [s3update](https://github.com/heetch/s3update): Related article [here](https://medium.com/inside-heetch/self-updating-tools-in-go-lang-9c07291d6285)
