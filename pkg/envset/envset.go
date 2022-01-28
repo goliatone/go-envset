@@ -23,6 +23,7 @@ type RunOptions struct {
 	Expand        bool
 	Required      []string
 	Inherit       []string
+	Ignored       []string
 	ExportEnvName string
 }
 

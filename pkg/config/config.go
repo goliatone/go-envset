@@ -53,6 +53,8 @@ type Config struct {
 		Path string `ini:"path"`
 		File string `ini:"file"`
 	} `ini:"template"`
+	Ignored  map[string][]string
+	Required map[string][]string
 }
 
 //Load returns configuration object from `.envsetrc` file
@@ -80,7 +82,45 @@ func Load(name string) (*Config, error) {
 		return &Config{}, err
 	}
 
+	if sec, err := cfg.GetSection("ignored"); err == nil {
+		c.Ignored = make(map[string][]string)
+		for _, k := range sec.KeyStrings() {
+			v := sec.Key(k).ValueWithShadows()
+			c.Ignored[k] = v
+		}
+	}
+
+	if sec, err := cfg.GetSection("required"); err == nil {
+		c.Required = make(map[string][]string)
+		for _, k := range sec.KeyStrings() {
+			v := sec.Key(k).ValueWithShadows()
+			c.Required[k] = v
+		}
+	}
+
 	return c, nil
+}
+
+//MergeIgnored will merge ignored values from flags
+//with values from envsetrc for a given section
+func (c *Config) MergeIgnored(section string, ignored []string) []string {
+	if i := c.Ignored[section]; len(i) == 0 {
+		return ignored
+	}
+	out := append(c.Ignored[section], ignored...)
+	//TODO: should we make them unique?
+	return out
+}
+
+//MergeRequired will merge ignored values from flags
+//with values from envsetrc for a given section
+func (c *Config) MergeRequired(section string, required []string) []string {
+	if i := c.Required[section]; len(i) == 0 {
+		return required
+	}
+	out := append(c.Required[section], required...)
+	//TODO: should we make them unique?
+	return out
 }
 
 //GetDefaultConfig returns the default

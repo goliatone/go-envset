@@ -55,6 +55,9 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 
 			env := c.Command.Name
 
+			required := c.StringSlice("required")
+			required = cnf.MergeRequired(env, required)
+
 			ro := envset.RunOptions{
 				Cmd:           ecmd.Cmd,
 				Args:          ecmd.Args,

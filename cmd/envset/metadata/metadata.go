@@ -18,6 +18,7 @@ import (
 //GetCommand returns a new cli.Command for the
 //metadata command.
 func GetCommand(cnf *config.Config) *cli.Command {
+
 	return &cli.Command{
 		Name:        "metadata",
 		Usage:       "generate a metadata file from environment file",
@@ -105,17 +106,27 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						Usage: "print the comparison results to stdout in JSON format",
 						Value: cnf.Meta.AsJSON,
 					},
+					&cli.StringSliceFlag{
+						Name:    "ignore",
+						Aliases: []string{"I"},
+						Usage:   "list of key names that are ignored",
+					},
 				},
 				Action: func(c *cli.Context) error {
 					print := c.Bool("print")
 					json := c.Bool("json")
 					name := c.String("section")
 
+					ignored := c.StringSlice("ignore")
+
+					ignored = cnf.MergeIgnored(name, ignored)
+
 					var source string
 					var target string
 
 					if c.Args().Len() == 1 {
 						source, _ = envset.FileFinder(filepath.Join(cnf.Meta.Dir, cnf.Meta.File))
+						source = makeRelative(source)
 						target = c.Args().Get(0)
 					} else {
 						source = c.Args().Get(0)
@@ -138,7 +149,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
 					}
 
-					s3 := envset.CompareSections(*s1, *s2)
+					s3 := envset.CompareSections(*s1, *s2, ignored)
 					s3.Name = name
 
 					if s3.IsEmpty() == false {
@@ -202,7 +213,6 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 			mit.AddRow("👻 Missing", k.Name, strmax(k.Hash, 12, "..."))
 		} else if strings.Contains(k.Comment, "extra") {
 			if mr == 0 {
-
 				mrt.AddRow(
 					"   "+colors.Bold("STATUS").Underline().String(),
 					colors.Bold("ENV KEY").Underline(),
@@ -225,13 +235,13 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	}
 
 	fmt.Printf("•  %s: %s\n", colors.Bold("source"), source)
-	fmt.Println(mit)
+	fmt.Println(tableOrMessage(mit.String(), colors.Green("👍 source is not missing environment variables").String()))
 
 	fmt.Printf("\n\n•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Println(mrt)
+	fmt.Println(tableOrMessage(mrt.String(), colors.Green("👍 target has no extra environment variables").String()))
 
 	fmt.Printf("\n\n•  %s\n", colors.Bold("different values"))
-	fmt.Println(dvt)
+	fmt.Println(tableOrMessage(dvt.String(), colors.Green("👍 All variables have same values").String()))
 
 	fmt.Println("")
 
@@ -245,6 +255,13 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 	)
 }
 
+func tableOrMessage(tbl, message string) string {
+	if tbl == "" {
+		return message
+	}
+	return tbl
+}
+
 func strmax(str string, l int, suffix string) string {
 	if len(str) <= l {
 		return str
@@ -255,5 +272,13 @@ func strmax(str string, l int, suffix string) string {
 func prettyOk(source, target string) {
 	fmt.Printf("\n•  %s: %s\n", colors.Bold("source"), source)
 	fmt.Printf("•  %s: %s\n", colors.Bold("target"), target)
-	fmt.Printf("🚀 %s\n\n", colors.Bold("All good!").Green())
+	fmt.Printf("\n🚀 %s\n\n", colors.Bold("All good!").Green())
+}
+
+func makeRelative(src string) string {
+	path, err := os.Getwd()
+	if err != nil {
+		return src
+	}
+	return strings.TrimPrefix(strings.TrimPrefix(src, path), "/")
 }
