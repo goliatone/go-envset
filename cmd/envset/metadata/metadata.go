@@ -18,6 +18,7 @@ import (
 //GetCommand returns a new cli.Command for the
 //metadata command.
 func GetCommand(cnf *config.Config) *cli.Command {
+
 	return &cli.Command{
 		Name:        "metadata",
 		Usage:       "generate a metadata file from environment file",
@@ -115,7 +116,10 @@ func GetCommand(cnf *config.Config) *cli.Command {
 					print := c.Bool("print")
 					json := c.Bool("json")
 					name := c.String("section")
+
 					ignored := c.StringSlice("ignore")
+
+					ignored = cnf.MergeIgnored(name, ignored)
 
 					var source string
 					var target string
