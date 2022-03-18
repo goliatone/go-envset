@@ -73,9 +73,9 @@ func (e *EnvSection) IsEmpty() bool {
 
 //ToJSON returns a JSON representation of a section
 func (e *EnvSection) ToJSON() (string, error) {
-	b, err := json.Marshal(e)
+	b, err := json.MarshalIndent(e, "", "    ")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("section json marshall: %w", err)
 	}
 	return string(b), nil
 }
@@ -125,9 +125,9 @@ func (e *EnvFile) GetSection(name string) (*EnvSection, error) {
 
 //ToJSON will print the JSON representation for a envfile
 func (e EnvFile) ToJSON() (string, error) {
-	b, err := json.Marshal(e)
+	b, err := json.MarshalIndent(e, "", "    ")
 	if err != nil {
-		return "", fmt.Errorf("json marshall: %w", err)
+		return "", fmt.Errorf("file json marshall: %w", err)
 	}
 	return string(b), nil
 }
@@ -139,7 +139,12 @@ func (e *EnvFile) FromJSON(path string) error {
 		return fmt.Errorf("read file %s: %w", path, err)
 	}
 
-	return json.Unmarshal([]byte(file), &e)
+	err = json.Unmarshal([]byte(file), &e)
+	if err != nil {
+		return fmt.Errorf("unmarshal file %s: %w", path, err)
+	}
+
+	return nil
 }
 
 //FromStdin read from stdin
@@ -162,11 +167,11 @@ type MetadataOptions struct {
 }
 
 //CreateMetadataFile will create or update metadata file
-func CreateMetadataFile(o MetadataOptions) error {
+func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 
 	filename, err := FileFinder(o.Name)
 	if err != nil {
-		return fmt.Errorf("file finder: %w", err)
+		return EnvFile{}, fmt.Errorf("file finder: %w", err)
 	}
 
 	ini.PrettyEqual = false
@@ -181,10 +186,9 @@ func CreateMetadataFile(o MetadataOptions) error {
 		Date:     time.Now().UTC(),
 	}
 
-	// err = envFile.Load(filename)
 	cfg, err := ini.Load(filename)
 	if err != nil {
-		return fmt.Errorf("ini load %s: %w", filename, err)
+		return EnvFile{}, fmt.Errorf("ini load %s: %w", filename, err)
 	}
 
 	for _, sec := range cfg.Sections() {
@@ -215,7 +219,7 @@ func CreateMetadataFile(o MetadataOptions) error {
 			}
 
 			if err != nil {
-				return fmt.Errorf("add key %s=%s: %w", k, v, err)
+				return EnvFile{}, fmt.Errorf("add key %s=%s: %w", k, v, err)
 			}
 
 			if sec.Key(k).Comment != "" {
@@ -224,28 +228,51 @@ func CreateMetadataFile(o MetadataOptions) error {
 		}
 	}
 
-	str, err := envFile.ToJSON()
+	return envFile, nil
+}
+
+func LoadMetadataFile(path string) (*EnvFile, error) {
+	envFile := &EnvFile{}
+	err := envFile.FromJSON(path)
 	if err != nil {
-		return fmt.Errorf("env file to json: %w", err)
+		return nil, fmt.Errorf("load metadata file: %w", err)
+	}
+	return envFile, nil
+}
+
+func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
+
+	if len(a.Sections) != len(b.Sections) {
+		return true, nil
 	}
 
-	if o.Print {
-		fmt.Print(str)
-	} else {
-		if _, err := os.Stat(o.Filepath); os.IsNotExist(err) {
-			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
-			if err != nil {
-				return fmt.Errorf("write file %s: %w", o.Filepath, err)
+	for _, sa := range a.Sections {
+		for _, sb := range b.Sections {
+			if sa.Name != sb.Name {
+				continue
 			}
-		} else if o.Overwrite == true {
-			err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
-			if err != nil {
-				return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
+			diff := CompareSections(*sa, *sb, []string{})
+			if !diff.IsEmpty() {
+				return true, nil
 			}
+			break
 		}
 	}
 
-	return nil
+	for _, sb := range b.Sections {
+		for _, sa := range a.Sections {
+			if sa.Name != sb.Name {
+				continue
+			}
+			diff := CompareSections(*sa, *sb, []string{})
+			if !diff.IsEmpty() {
+				return true, nil
+			}
+			break
+		}
+	}
+
+	return false, nil
 }
 
 func md5HashValue(value string) (string, error) {

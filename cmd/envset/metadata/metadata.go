@@ -1,7 +1,9 @@
 package metadata
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -43,9 +45,8 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			globals := c.Bool("globals")
 			secret := c.String("secret")
 
-			//TODO: Handle case repo does not have a remote!
 			projectURL, err := gitconfig.OriginURL()
-			if err != nil {
+			if err != nil && !isMissingRemoteURL(err) {
 				return err
 			}
 
@@ -54,11 +55,12 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				return err
 			}
 
-			if _, err = os.Stat(dir); os.IsNotExist(err) {
+			if ok := exists(dir); !ok {
 				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 					return err
 				}
 			}
+
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
@@ -80,7 +82,49 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				Secret:        secret,
 			}
 
-			return envset.CreateMetadataFile(o)
+			newEnv, err := envset.CreateMetadataFile(o)
+			if err != nil {
+				return err
+			}
+
+			envExists := exists(o.Filepath)
+
+			if envExists {
+				oldEnv, err := envset.LoadMetadataFile(o.Filepath)
+				if err != nil {
+					return err
+				}
+
+				if changed, err := envset.CompareMetadataFiles(&newEnv, oldEnv); !changed {
+					return nil
+				} else if err != nil {
+					return err
+				}
+			}
+
+			str, err := newEnv.ToJSON()
+			if err != nil {
+				return fmt.Errorf("env file to json: %w", err)
+			}
+
+			if o.Print {
+				_, err = fmt.Print(str)
+				return fmt.Errorf("print output: %w", err)
+			}
+
+			if !envExists {
+				err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+				if err != nil {
+					return fmt.Errorf("write file %s: %w", o.Filepath, err)
+				}
+			} else if o.Overwrite == true {
+				err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+				if err != nil {
+					return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
+				}
+			}
+
+			return nil
 		},
 		Subcommands: []*cli.Command{
 			{
@@ -281,4 +325,14 @@ func makeRelative(src string) string {
 		return src
 	}
 	return strings.TrimPrefix(strings.TrimPrefix(src, path), "/")
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
+func isMissingRemoteURL(err error) bool {
+	msg := err.Error()
+	return msg == "the key remote.origin.url is not found"
 }

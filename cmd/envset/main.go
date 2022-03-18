@@ -37,7 +37,7 @@ func init() {
 		Authors: []*cli.Author{
 			{
 				Name:  "Goliat One",
-				Email: "hi@goliat.one",
+				Email: "envset@goliat.one",
 			},
 		},
 		Copyright: "(c) 2021 Goliatone",
