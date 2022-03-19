@@ -298,6 +298,9 @@ func prettyPrint(diff envset.EnvSection, source, target string, ignored []string
 	fmt.Printf("\n\n•  %s\n", colors.Bold("different values"))
 	fmt.Println(tableOrMessage(dvt.String(), colors.Green("👍 All variables have same values").String()))
 
+	//TODO: print ignored keys
+	//for _, ik := range diff.Ignored
+
 	fmt.Println("")
 
 	//TODO: add dynamic padding
