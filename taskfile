@@ -11,6 +11,7 @@ PROJECT="$(awk 'match($0, /module (.*)/) {print substr($2, RSTART, RLENGTH)}' go
 ENTRYPOINT="cmd/envset/main.go"
 CODE_EDITOR=ci
 GO_VERSION=go1.17.8
+
 # If we have a .taskenv file load it as source
 # we can override the previous set of variables
 if [ -f .taskenv ]; then
@@ -58,9 +59,8 @@ function wrk:dev {
 ## 
 ## Arguments:
 ## @arg 1 {string} [tag=0.0.1]
-function release:build {
-    echo ""
-    echo "running release:build..."
+function build {
+    lgr I "running build..."
     
     VERSION=$(version:upsert $1)
     BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
@@ -70,9 +70,7 @@ function release:build {
 
     LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
     
-    echo "go build -ldflags ${LDFLAGS}"
-
-    go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
+    lgr exec -- go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
 }
 
 ##
@@ -288,12 +286,12 @@ function ci:clean {
 ## Install Ubuntu binary from GitHub releases.
 function install:ubuntu {
     tag=${1:-$(version:get)}
-    cd /tmp
-    wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_${tag}_linux_x86_64.deb
-    sudo dpkg -i envset_${tag}_linux_x86_64.deb
+    cd /tmp || exit
+    wget "https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_${tag}_linux_x86_64.deb"
+    sudo dpkg -i "envset_${tag}_linux_x86_64.deb"
     sleep 1
     echo ""
-    echo $(envset -v)
+    envset -v
     echo ""
 }
 
