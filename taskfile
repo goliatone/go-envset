@@ -35,8 +35,8 @@ function dev:test {
 }
 
 function wrk:dev {
-    $GVM_ROOT/bin/gvm use $GO_VERSION
-    $GVM_ROOT/bin/gvm pkgset use envset
+    "$GVM_ROOT/bin/gvm" use $GO_VERSION
+    "$GVM_ROOT/bin/gvm" pkgset use envset
     GOROOT="$HOME/.gvm/gos/$GO_VERSION" $CODE_EDITOR .
 }
 
@@ -101,6 +101,9 @@ function release {
 
     # Update version file
     version:set "${tag}"
+
+    # Update local tags
+    git pull --tags
 
     # Add updated version file to git
     git add "${VERSION_FILE}"

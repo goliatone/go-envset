@@ -112,6 +112,10 @@ func Test_Metadata(t *testing.T) {
 	cd(dir, t)
 }
 
+func Test_Metadata_Print(t *testing.T) {
+	//TODO: ensure we print output
+}
+
 func Test_Metadata_Idempotency(t *testing.T) {
 	dir := cd("testdata", t)
 	rm(".meta", t)
