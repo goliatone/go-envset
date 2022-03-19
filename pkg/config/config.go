@@ -1,6 +1,7 @@
 package config
 
 import (
+	"path"
 	"time"
 
 	"github.com/goliatone/go-envset/pkg/envset"
@@ -121,6 +122,26 @@ func (c *Config) MergeRequired(section string, required []string) []string {
 	out := append(c.Required[section], required...)
 	//TODO: should we make them unique?
 	return out
+}
+
+//Get will return the value of the given key
+func (c *Config) Get(key string) string {
+	switch key {
+	case "filename":
+		return c.Filename
+	case "meta.dir":
+		return c.Meta.Dir
+	case "meta.file":
+		return c.Meta.File
+	case "meta.path":
+		return path.Join(c.Meta.Dir, c.Meta.File)
+	case "template.path":
+		return c.Template.Path
+	case "template.file":
+		return c.Template.File
+	default:
+		return ""
+	}
 }
 
 //GetDefaultConfig returns the default
