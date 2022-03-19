@@ -316,6 +316,7 @@ func CompareSections(s1, s2 EnvSection, ignored []string) EnvSection {
 
 	for i, k1 := range s1.Keys {
 		if ok := ignore[k1.Name]; ok {
+			//TODO: diff.Ignored = append(diff.Ignored, k1)
 			continue
 		}
 
@@ -339,6 +340,7 @@ func CompareSections(s1, s2 EnvSection, ignored []string) EnvSection {
 
 	for _, k2 := range s2.Keys {
 		if ok := ignore[k2.Name]; ok {
+			//TODO: diff.Ignored = append(diff.Ignored, k2)
 			continue
 		}
 

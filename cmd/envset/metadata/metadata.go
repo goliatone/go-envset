@@ -209,7 +209,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 
 					if s3.IsEmpty() == false {
 						if print && !json {
-							prettyPrint(s3, source, target)
+							prettyPrint(s3, source, target, ignored)
 							return cli.Exit("", 1)
 						} else if print && json {
 							j, err := s3.ToJSON()
@@ -233,7 +233,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 	}
 }
 
-func prettyPrint(diff envset.EnvSection, source, target string) {
+func prettyPrint(diff envset.EnvSection, source, target string, ignored []string) {
 
 	sort.Slice(diff.Keys, func(p, q int) bool {
 		return diff.Keys[p].Comment > diff.Keys[q].Comment
@@ -300,14 +300,30 @@ func prettyPrint(diff envset.EnvSection, source, target string) {
 
 	fmt.Println("")
 
+	//TODO: add dynamic padding
 	fmt.Printf(
-		"\n👻 Missing in %s (%d) | 🌱 Missing in %s (%d) | ❓ Different values (%d)\n\n",
+		"\n👻 Missing in %s (%d) | 🌱 Missing in %s (%d) \n\n❓ Different values  (%d) | 🤷 Ignored Keys (%d)\n\n",
 		colors.Bold("source"),
-		colors.Red(mr).Bold(),
+		greenOrRed(mr).Bold(),
 		colors.Bold("target"),
-		colors.Red(mi).Bold(),
-		colors.Yellow(dv).Bold(),
+		greenOrRed(mi).Bold(),
+		greenOrYellow(dv).Bold(),
+		greenOrYellow(len(ignored)).Bold(),
 	)
+}
+
+func greenOrRed(val int) colors.Value {
+	if val == 0 {
+		return colors.Green(val)
+	}
+	return colors.Red(val)
+}
+
+func greenOrYellow(val int) colors.Value {
+	if val == 0 {
+		return colors.Green(val)
+	}
+	return colors.Yellow(val)
 }
 
 func tableOrMessage(tbl, message string) string {
