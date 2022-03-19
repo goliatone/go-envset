@@ -267,7 +267,9 @@ Pretty output
 ❓ Different    NEW_THING       8896f09440c1...
 
 
-👻 Missing in source (1) ¦ 🌱 Missing in target (1) ¦ ❓ Different values (2)
+👻 Missing in source (1) | 🌱 Missing in target (1) 
+
+❓ Different values (2)  | 🤷 Ignored Keys (0)
 ```
 
 To have JSON output you can pass the `--json` flag:
