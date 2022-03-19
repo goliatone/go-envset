@@ -11,7 +11,8 @@ import (
 //rc command.
 func GetCommand(cnf *config.Config) *cli.Command {
 	return &cli.Command{
-		Name:        "rc",
+		Name:        "config",
+		Aliases:     []string{"rc"},
 		Usage:       "generate an envsetrc file",
 		Description: "creates an envsetrc file with either the current options or the default options",
 		Flags: []cli.Flag{
@@ -37,6 +38,20 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			fmt.Printf("%s", config.GetDefaultConfig())
 
 			return nil
+		},
+		Subcommands: []*cli.Command{
+			{
+				Name:        "get",
+				Usage:       "get option value for key",
+				UsageText:   "get option value for key",
+				Description: "retrieves configuration value of given key",
+				Action: func(c *cli.Context) error {
+					key := c.Args().First()
+					val := cnf.Get(key)
+					fmt.Println(val)
+					return nil
+				},
+			},
 		},
 	}
 }

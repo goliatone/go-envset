@@ -8,13 +8,14 @@
 * [Environment level configuration](#Environmentlevelconfiguration)
 * [Similar Tools](#SimilarTools)
 * [Examples](#Examples)
-	* [Executing a command](#Executingacommand)
-		* [Variable substitution](#Variablesubstitution)
-		* [Inherit environment](#Inheritenvironment)
-		* [Load env file to current shell session](#Loadenvfiletocurrentshellsession)
-		* [Required environment variables](#Requiredenvironmentvariables)
-	* [Generating an example template](#Generatinganexampletemplate)
-	* [Support for .env files](#Supportfor.envfiles)
+	* [Executing A Command](#ExecutingACommand)
+		* [Variable Substitution](#VariableSubstitution)
+		* [Inherit Environment](#InheritEnvironment)
+		* [Overwriting Variables At Runtime](#OverwritingVariablesAtRuntime)
+		* [Load Env File To Current Shell Session](#LoadEnvFileToCurrentShellSession)
+		* [Required Environment Variables](#RequiredEnvironmentVariables)
+	* [Generating An Example Template](#GeneratingAnExampleTemplate)
+	* [Support For .env Files](#SupportFor.envFiles)
 	* [Metadata](#Metadata)
 	* [Metadata Compare](#MetadataCompare)
 		* [Ignore Variables](#IgnoreVariables)
@@ -27,7 +28,7 @@
 	* [Commands](#Commands)
 	* [Variable Expansion](#VariableExpansion)
 	* [Commands](#Commands-1)
-* [.envset file](#envsetfile)
+* [.envset File](#envsetFile)
 * [.envsetrc](#envsetrc)
 	* [Configuration](#Configuration)
 	* [Configuration Syntax](#ConfigurationSyntax)
@@ -85,7 +86,7 @@ Instead of having an `.env` file per environment you can have one single `.envse
 
 ## <a name='Examples'></a>Examples
 
-### <a name='Executingacommand'></a>Executing a command
+### <a name='ExecutingACommand'></a>Executing A Command
 
 An **.envset** file could look like this:
 
@@ -116,7 +117,7 @@ To use it, simply prefix the call to your program with `envset` and the name of 
 $ envset development -- node app.js
 ```
 
-#### <a name='Variablesubstitution'></a>Variable substitution
+#### <a name='VariableSubstitution'></a>Variable Substitution
 
 You can execute commands that use environment variables in the command arguments.
 
@@ -127,7 +128,7 @@ $ envset development -- say '${MSG}'
 $ envset development -- say \${MSG}
 ```
 
-#### <a name='Inheritenvironment'></a>Inherit environment
+#### <a name='InheritEnvironment'></a>Inherit Environment
 
 You can control environment inheritance using two flags:
 
@@ -159,7 +160,15 @@ In the previous example instead of exposing the whole parent environment we coul
 $ envset development -I=GOPATH -I=HOME -- go run cmd/app/server.go
 ```
 
-#### <a name='Loadenvfiletocurrentshellsession'></a>Load env file to current shell session
+#### <a name='OverwritingVariablesAtRuntime'></a>Overwriting Variables At Runtime
+
+You can overwrite environment variables without editing your `.envset` file.
+
+```console
+APP_NAME="New Name" envset development --isolated=false -- spd-say '${APP_NAME}'
+```
+
+#### <a name='LoadEnvFileToCurrentShellSession'></a>Load Env File To Current Shell Session
 
 If you want to make the variables defined in a env file to your running shell session use something like the following snippet.
 
@@ -168,7 +177,7 @@ If you want to make the variables defined in a env file to your running shell se
 $ eval $(envset development)
 ```
 
-#### <a name='Requiredenvironmentvariables'></a>Required environment variables
+#### <a name='RequiredEnvironmentVariables'></a>Required Environment Variables
 
 You can specify a list of required environment variables for your command using the `--required` flag or its `-R` alias.
 
@@ -190,7 +199,7 @@ $ envset development --required=BOOM -R BOOM2 -- node index.js
 missing required keys: BOOM,BOOM2
 ```
 
-### <a name='Generatinganexampletemplate'></a>Generating an example template
+### <a name='GeneratingAnExampleTemplate'></a>Generating An Example Template
 
 If we run the `envset template` command with the previous **.envset** file we generate a **envset.example** file:
 
@@ -215,7 +224,7 @@ NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
 ```
 
 
-### <a name='Supportfor.envfiles'></a>Support for .env files
+### <a name='SupportFor.envFiles'></a>Support For .env Files
 
 You can load other environment files like `.env` files:
 
@@ -371,7 +380,7 @@ $ envset development -- node cli.js --user '${USER}'
 
 If you type `envset` without arguments it will display help and a list of supported environment names.
 
-## <a name='envsetfile'></a>.envset file
+## <a name='envsetFile'></a>.envset File
 
 
 ## <a name='envsetrc'></a>.envsetrc

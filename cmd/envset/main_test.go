@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"io"
 	"os"
 	"path"
 	"testing"
@@ -109,6 +112,42 @@ func Test_Metadata(t *testing.T) {
 	cd(dir, t)
 }
 
+func Test_Metadata_Idempotency(t *testing.T) {
+	dir := cd("testdata", t)
+	rm(".meta", t)
+
+	testcli.Run(bin,
+		"metadata",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	filePath := path.Join(".meta", "data.json")
+	assert.DirExists(t, ".meta")
+	assert.FileExists(t, filePath)
+
+	hash1 := md5sum(filePath, t)
+
+	testcli.Run(bin,
+		"metadata",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	hash2 := md5sum(filePath, t)
+
+	if hash1 != hash2 {
+		t.Fatal("Expected meta file to not change with no data changes")
+	}
+
+	rm(".meta", t)
+	cd(dir, t)
+}
+
 func Test_MetadataOptions(t *testing.T) {
 	rm("testdata/meta", t)
 
@@ -192,4 +231,18 @@ func cd(dir string, t *testing.T) string {
 	}
 	os.Chdir(dir)
 	return cur
+}
+
+func md5sum(filePath string, t *testing.T) string {
+	file, err := os.Open(filePath)
+	if err != nil {
+		t.Fatalf("error removing dir: %q ", err)
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		t.Fatalf("error removing dir: %q ", err)
+	}
+	return hex.EncodeToString(hash.Sum(nil))
 }
