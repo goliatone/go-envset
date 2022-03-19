@@ -9,7 +9,8 @@ BINPATH="cmd/envset"
 VERSION_FILE="./.version"
 PROJECT="$(awk 'match($0, /module (.*)/) {print substr($2, RSTART, RLENGTH)}' go.mod)"
 ENTRYPOINT="cmd/envset/main.go"
-
+CODE_EDITOR=ci
+GO_VERSION=go1.17.8
 # If we have a .taskenv file load it as source
 # we can override the previous set of variables
 if [ -f .taskenv ]; then
@@ -34,8 +35,9 @@ function dev:test {
 }
 
 function wrk:dev {
-    gvm use go1.17
-    gvm pkgset use envse
+    $GVM_ROOT/bin/gvm use $GO_VERSION
+    $GVM_ROOT/bin/gvm pkgset use envset
+    GOROOT="$HOME/.gvm/gos/$GO_VERSION" $CODE_EDITOR .
 }
 
 ## ########################################
