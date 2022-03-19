@@ -113,7 +113,80 @@ func Test_Metadata(t *testing.T) {
 }
 
 func Test_Metadata_Print(t *testing.T) {
-	//TODO: ensure we print output
+	dir := cd("testdata", t)
+	rm(".meta", t)
+
+	testcli.Run(bin,
+		"metadata",
+		"--print",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("development") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "APP_ENV?")
+	}
+
+	if !testcli.StdoutContains("\"algorithm\": \"sha256\"") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "sha256 default algorithm?")
+	}
+
+	assert.NoDirExists(t, ".meta")
+	assert.NoFileExists(t, path.Join(".meta", "data.json"))
+
+	rm(".meta", t)
+	cd(dir, t)
+}
+
+func Test_Metadata_Secret_Print(t *testing.T) {
+	dir := cd("testdata", t)
+	rm(".meta", t)
+
+	testcli.Run(bin,
+		"metadata",
+		"--print",
+		"--secret=secret",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("\"algorithm\": \"hmac\"") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "hmac algorithm?")
+	}
+	assert.NoDirExists(t, ".meta")
+	assert.NoFileExists(t, path.Join(".meta", "data.json"))
+
+	rm(".meta", t)
+	cd(dir, t)
+}
+
+func Test_Metadata_MD5_Print(t *testing.T) {
+	dir := cd("testdata", t)
+	rm(".meta", t)
+
+	testcli.Run(bin,
+		"metadata",
+		"--print",
+		"--hash-algo",
+		"md5",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+
+	if !testcli.StdoutContains("\"algorithm\": \"md5\"") {
+		t.Fatalf("Expected %q to contain %q", testcli.Stdout(), "md5 algorithm?")
+	}
+	assert.NoDirExists(t, ".meta")
+	assert.NoFileExists(t, path.Join(".meta", "data.json"))
+
+	rm(".meta", t)
+	cd(dir, t)
 }
 
 func Test_Metadata_Idempotency(t *testing.T) {
