@@ -21,9 +21,9 @@
 		* [Ignore Variables](#IgnoreVariables)
 * [Installation](#Installation)
 	* [macOS](#macOS)
-	* [Ubuntu/Debian](#UbuntuDebian)
-	* [CentOS/Redhat](#CentOSRedhat)
-	* [Manual Install](#ManualInstall)
+	* [Ubuntu/Debian x86_64 - amd64](#UbuntuDebianx86_64-amd64)
+	* [CentOS/Redhat x86_64 - amd64](#CentOSRedhatx86_64-amd64)
+	* [Manual Install x86_64 - amd64](#ManualInstallx86_64-amd64)
 * [Documentation](#Documentation)
 	* [Commands](#Commands)
 	* [Variable Expansion](#VariableExpansion)
@@ -319,7 +319,7 @@ $ brew install envset
 ```
 
 
-### <a name='UbuntuDebian'></a>Ubuntu/Debian
+### <a name='UbuntuDebianx86_64-amd64'></a>Ubuntu/Debian x86_64 - amd64
 
 ```console
 $ export tag=<version>
@@ -328,13 +328,13 @@ $ wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_$
 $ sudo dpkg -i envset_${tag}_linux_x86_64.deb
 ```
 
-### <a name='CentOSRedhat'></a>CentOS/Redhat
+### <a name='CentOSRedhatx86_64-amd64'></a>CentOS/Redhat x86_64 - amd64
 
 ```console
 $ yum localinstall https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.rpm
 ```
 
-### <a name='ManualInstall'></a>Manual Install
+### <a name='ManualInstallx86_64-amd64'></a>Manual Install x86_64 - amd64
 
 ```console
 $ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.tar.gz
