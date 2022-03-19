@@ -55,7 +55,9 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				return err
 			}
 
+			shouldClean := false
 			if ok := exists(dir); !ok {
+				shouldClean = true
 				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 					return err
 				}
@@ -95,7 +97,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 					return err
 				}
 
-				if changed, err := envset.CompareMetadataFiles(&newEnv, oldEnv); !changed {
+				if changed, err := envset.CompareMetadataFiles(&newEnv, oldEnv); !changed && !o.Print {
 					return nil
 				} else if err != nil {
 					return err
@@ -107,9 +109,18 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				return fmt.Errorf("env file to json: %w", err)
 			}
 
+			str = str + "\n"
+
 			if o.Print {
+
+				if shouldClean {
+					_ = os.RemoveAll(dir)
+				}
 				_, err = fmt.Print(str)
-				return fmt.Errorf("print output: %w", err)
+				if err != nil {
+					return fmt.Errorf("print output: %w", err)
+				}
+				return nil
 			}
 
 			if !envExists {
