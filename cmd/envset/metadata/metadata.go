@@ -33,7 +33,13 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			&cli.BoolFlag{Name: "overwrite", Usage: "set to false to prevent overwrite metadata file", Value: true},
 			&cli.BoolFlag{Name: "values", Usage: "add flag to show values in the output"},
 			&cli.BoolFlag{Name: "globals", Usage: "include global section", Value: false},
-			&cli.StringFlag{Name: "secret", Usage: "`password` used to encode hash values", EnvVars: []string{"ENVSET_HASH_SECRET"}},
+			&cli.StringFlag{Name: "secret", Usage: "`password` used to encode hash values. Define env ENVSET_HASH_SECRET", EnvVars: []string{"ENVSET_HASH_SECRET"}},
+			&cli.StringFlag{
+				Name:    "hash-algo",
+				Usage:   "hash algorithm used to hash values. Define with ENVSET_HASH_ALGORITHM",
+				EnvVars: []string{"ENVSET_HASH_ALGORITHM"},
+				Value:   envset.HashSHA256,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
@@ -44,6 +50,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			values := c.Bool("values")
 			globals := c.Bool("globals")
 			secret := c.String("secret")
+			algorithm := c.String("hash-algo")
 
 			projectURL, err := gitconfig.OriginURL()
 			if err != nil && !isMissingRemoteURL(err) {
@@ -66,10 +73,13 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
-			algorithm := "sha256"
+			fmt.Printf("passed value: %s\n", algorithm)
+
 			if secret != "" {
-				algorithm = "hmac"
+				algorithm = envset.HashHMAC
 			}
+
+			fmt.Printf("option value: %s\n", algorithm)
 
 			o := envset.MetadataOptions{
 				Name:          envfile,
