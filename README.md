@@ -179,7 +179,9 @@ You can specify a list of required environment variables for your command using 
 Given the following env file:
 
 ```ini
-APP_ENV="this is a test"
+[development]
+APP_SECRET_TOKEN={{APP_SECRET_TOKEN}}
+APP_REMOTE_SERVICE_KEY={{APP_REMOTE_SERVICE_KEY}}
 ```
 
 If you run the following command:
