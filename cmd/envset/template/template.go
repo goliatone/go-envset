@@ -20,7 +20,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "print", Usage: "only print the contents to stdout, don't write file"},
 			&cli.StringFlag{Name: "filename", Usage: "template file `name`", Value: cnf.Template.File},
-			&cli.StringFlag{Name: "filepath", Usage: "template file `path`", Value: cnf.Template.Path},
+			&cli.StringFlag{Name: "filepath", Usage: "template file `path`", Value: cnf.Template.Dir},
 			&cli.StringFlag{Name: "env-file", Value: cnf.Filename, Usage: "load environment from `FILE`"},
 			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite file, this will delete any changes"},
 		},

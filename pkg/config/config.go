@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"path"
 	"time"
 
@@ -23,7 +24,7 @@ print=true
 json=false
 
 [template]
-path=.
+dir=.
 file=envset.example
 
 [environments]
@@ -51,7 +52,7 @@ type Config struct {
 		AsJSON bool   `ini:"json"`
 	} `ini:"metadata"`
 	Template struct {
-		Path string `ini:"path"`
+		Dir  string `ini:"dir"`
 		File string `ini:"file"`
 	} `ini:"template"`
 	Ignored  map[string][]string
@@ -131,16 +132,56 @@ func (c *Config) Get(key string) string {
 		return c.Filename
 	case "meta.dir":
 		return c.Meta.Dir
+	case "metadata.dir":
+		return c.Meta.Dir
 	case "meta.file":
 		return c.Meta.File
-	case "meta.path":
+	case "metadata.file":
+		return c.Meta.File
+	case "meta.filepath":
 		return path.Join(c.Meta.Dir, c.Meta.File)
-	case "template.path":
-		return c.Template.Path
+	case "metadata.filepath":
+		return path.Join(c.Meta.Dir, c.Meta.File)
+	case "template.dir":
+		return c.Template.Dir
 	case "template.file":
 		return c.Template.File
+	case "template.filepath":
+		return path.Join(c.Template.Dir, c.Template.File)
 	default:
 		return ""
+	}
+}
+
+func printMap(s map[string][]string) string {
+	o := ""
+	for k, m := range s {
+		l := printList(m)
+		o += fmt.Sprintf("%s - \n%s", k, l)
+	}
+	return o
+}
+
+func printList(a []string) string {
+	o := ""
+	for _, s := range a {
+		o += fmt.Sprintf("%s\n", s)
+	}
+	return o
+}
+
+//ListKeys returns the list of config keys
+func (c *Config) ListKeys() []string {
+	return []string{
+		"filename",
+		"meta.dir",
+		"meta.file",
+		"meta.filepath",
+		"template.dir",
+		"template.file",
+		"template.filepath",
+		"ignored",
+		"required",
 	}
 }
 
