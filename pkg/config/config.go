@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/goliatone/go-envset/pkg/envset"
@@ -25,7 +24,7 @@ print=true
 json=false
 
 [template]
-path=.
+dir=.
 file=envset.example
 
 [environments]
@@ -53,7 +52,7 @@ type Config struct {
 		AsJSON bool   `ini:"json"`
 	} `ini:"metadata"`
 	Template struct {
-		Path string `ini:"path"`
+		Dir  string `ini:"dir"`
 		File string `ini:"file"`
 	} `ini:"template"`
 	Ignored  map[string][]string
@@ -131,14 +130,6 @@ func (c *Config) Get(key string) string {
 	switch key {
 	case "filename":
 		return c.Filename
-	case "environments":
-		return printList(c.Environments.Name)
-	case "expand":
-		return strconv.FormatBool(c.Expand)
-	case "isolated":
-		return strconv.FormatBool(c.Isolated)
-	case "export_environment":
-		return c.ExportEnvName
 	case "meta.dir":
 		return c.Meta.Dir
 	case "metadata.dir":
@@ -147,18 +138,16 @@ func (c *Config) Get(key string) string {
 		return c.Meta.File
 	case "metadata.file":
 		return c.Meta.File
-	case "meta.path":
+	case "meta.filepath":
 		return path.Join(c.Meta.Dir, c.Meta.File)
-	case "metadata.path":
+	case "metadata.filepath":
 		return path.Join(c.Meta.Dir, c.Meta.File)
-	case "template.path":
-		return c.Template.Path
+	case "template.dir":
+		return c.Template.Dir
 	case "template.file":
 		return c.Template.File
-	case "ignored":
-		return printMap(c.Ignored)
-	case "required":
-		return printMap(c.Required)
+	case "template.filepath":
+		return path.Join(c.Template.Dir, c.Template.File)
 	default:
 		return ""
 	}
@@ -185,15 +174,12 @@ func printList(a []string) string {
 func (c *Config) ListKeys() []string {
 	return []string{
 		"filename",
-		"environments",
-		"expand",
-		"isolated",
-		"export_environment",
 		"meta.dir",
 		"meta.file",
-		"meta.path",
-		"template.path",
+		"meta.filepath",
+		"template.dir",
 		"template.file",
+		"template.filepath",
 		"ignored",
 		"required",
 	}
