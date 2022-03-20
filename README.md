@@ -91,23 +91,13 @@ Instead of having an `.env` file per environment you can have one single `.envse
 An **.envset** file could look like this:
 
 ```ini
-[production]
-NODE_AWS_SECRET_ACCESS_KEY=FS40N0QY22p2bpciAh7wuAeHjJURgXIBQ2cGodpJD3FRjw2EyYGjyXpi73Ld8zWO
-NODE_AWS_ACCESS_KEY_ID=LSLhv74Q1vH8auQKUt5pFwnix0FUl0Ml
-NODE_HONEYBADGER_KEY=LCgZgqsxKfhO
-NODE_POSTGRES_ENDPOINT=50.23.54.25
-NODE_POSTGRES_DATABASE=myproject
-NODE_POSTGRES_PSWD=Pa$sW03d
-NODE_POSTGRES_USER=myproject
-
 [development]
-NODE_AWS_SECRET_ACCESS_KEY=HN5ITok3lDaA1ASHxtEpy1U9XCjZwThmfgoIYZk8bkOqc5yk6sT7AWd3ooNeRFV9
-NODE_AWS_ACCESS_KEY_ID=m35W4PGGVZfj1gOxYvztFxBD5F2605B3
-NODE_HONEYBADGER_KEY=f3MNPUhZoki6
-NODE_POSTGRES_ENDPOINT=localhost
-NODE_POSTGRES_DATABASE=postgres
-NODE_POSTGRES_PSWD=postgres
-NODE_POSTGRES_USER=postgres
+APP_SECRET_TOKEN=4c038a0b-4ed9-44e6-8682-9c82d5b831fd
+APP_REMOTE_SERVICE_KEY=07ed716a-078a-4327-8847-b86394f14575
+
+[production]
+APP_SECRET_TOKEN=796bca0f-2692-495b-a994-e8ce82cad55f
+APP_REMOTE_SERVICE_KEY=5655969e-af9f-4ac5-b186-184f43468443
 ```
 
 
@@ -123,39 +113,44 @@ You can execute commands that use environment variables in the command arguments
 
 Is important to note that you need to scape the variable so that it is not replaced in the shell as you call `envset`. You can do so by using single quotes `'` or the scape char `\$`.
 
-```sh
-$ envset development -- say '${MSG}'
-$ envset development -- say \${MSG}
+```console
+$ envset development -- say '${APP_ENV}'
+$ envset development -- say \${APP_ENV}
 ```
 
 #### <a name='InheritEnvironment'></a>Inherit Environment
 
-You can control environment inheritance using two flags:
-
-- `--isolated`
-- `--inherit`
-
-By default `envset` will run commands in a clean environment. Sometimes you want the executed command to access the host's environment. To do so you need to pass the `--isolated=false` flag.
+Sometimes the command you want to run will assume that has access to predefined environment variables:
 
 ```console
-$ envset development --isolated=false -- spd-say '${APP_NAME}'
+$ envset development -- spd-say '${APP_ENV}'
+Failed to connect to Speech Dispatcher:
+Error: Can't connect to unix socket ~/.cache/speech-dispatcher/speechd.sock: No such file or directory. Autospawn: Autospawn failed. Speech Dispatcher refused to start with error code, stating this as a reason: 
+exit status 1
 ```
 
-Some commands might rely on environment variables set on your shell, for instance if you want to `go run`:
+By default the process in which `envset` runs `spd-say` in an isolated mode has no access to your shell.
+
+You can control environment inheritance using two flags:
+
+- `--isolated`: Inherit all parent environment variables
+- `--inherit`: Inherit specific parent environment variables
+
+If you need the executed command to inherit the host's environment wholesale use the `--isolated=false` flag.
+
+```console
+$ envset development --isolated=false -- spd-say '${APP_ENV}'
+```
+
+Some commands might rely on a known environment variable set on your shell, for instance if you want to `go run`:
 
 ```console
 $ envset development -- go run cmd/app/server.go
 missing $GOPATH
 ```
-You will get an error saying that `$GOPATH` is not available. You should run the command with the `--isolated=false`:
 
-```console
-$ envset development --isolated=false -- go run cmd/app/server.go
-```
+You will get an error saying that `$GOPATH` is not available. The `--inherit` flag lets you specify a list of environment variable keys that will be inherited from the parent environment:
 
-The `-inherit` flag lets you specify a list of environment variable keys that will be inherited from the parent environment.
-
-In the previous example instead of exposing the whole parent environment we could just expose `$GOPATH`:
 ```console
 $ envset development -I=GOPATH -I=HOME -- go run cmd/app/server.go
 ```
@@ -184,7 +179,7 @@ You can specify a list of required environment variables for your command using 
 Given the following env file:
 
 ```ini
-APP_MESSAGE="this is a test"
+APP_ENV="this is a test"
 ```
 
 If you run the following command:
@@ -205,22 +200,12 @@ If we run the `envset template` command with the previous **.envset** file we ge
 
 ```ini
 [development]
-NODE_AWS_SECRET_ACCESS_KEY={{NODE_AWS_SECRET_ACCESS_KEY}}
-NODE_AWS_ACCESS_KEY_ID={{NODE_AWS_ACCESS_KEY_ID}}
-NODE_HONEYBADGER_KEY={{NODE_HONEYBADGER_KEY}}
-NODE_POSTGRES_ENDPOINT={{NODE_POSTGRES_ENDPOINT}}
-NODE_POSTGRES_DATABASE={{NODE_POSTGRES_DATABASE}}
-NODE_POSTGRES_PSWD={{NODE_POSTGRES_PSWD}}
-NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
+APP_SECRET_TOKEN={{APP_SECRET_TOKEN}}
+APP_REMOTE_SERVICE_KEY={{APP_REMOTE_SERVICE_KEY}}
 
 [production]
-NODE_AWS_SECRET_ACCESS_KEY={{NODE_AWS_SECRET_ACCESS_KEY}}
-NODE_AWS_ACCESS_KEY_ID={{NODE_AWS_ACCESS_KEY_ID}}
-NODE_HONEYBADGER_KEY={{NODE_HONEYBADGER_KEY}}
-NODE_POSTGRES_ENDPOINT={{NODE_POSTGRES_ENDPOINT}}
-NODE_POSTGRES_DATABASE={{NODE_POSTGRES_DATABASE}}
-NODE_POSTGRES_PSWD={{NODE_POSTGRES_PSWD}}
-NODE_POSTGRES_USER={{NODE_POSTGRES_USER}}
+APP_SECRET_TOKEN={{APP_SECRET_TOKEN}}
+APP_REMOTE_SERVICE_KEY={{APP_REMOTE_SERVICE_KEY}}
 ```
 
 
@@ -263,7 +248,7 @@ Pretty output
 
 •  different values
    STATUS       ENV KEY         HASH
-❓ Different    APP_MESSAGE     2e9975854897...
+❓ Different    APP_ENV         2e9975854897...
 ❓ Different    NEW_THING       8896f09440c1...
 
 
@@ -275,7 +260,7 @@ Pretty output
 To have JSON output you can pass the `--json` flag:
 
 ```console
-$ envset metadata compare --section=development .meta/data.json .meta/prod.data.json 2>&1 | jq .
+$ envset metadata compare --json -s development .meta/data.json .meta/prod.json
 {
   "name": "development",
   "values": [
