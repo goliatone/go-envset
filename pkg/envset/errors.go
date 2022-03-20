@@ -1,5 +1,7 @@
 package envset
 
+import "fmt"
+
 type envFileErrorNotFound struct {
 	err error
 	msg string
@@ -43,4 +45,15 @@ func (e ErrorRunningCommand) Error() string {
 func IsErrorRunningCommand(v interface{}) bool {
 	_, isType := v.(ErrorRunningCommand)
 	return isType
+}
+
+//ErrorWrongAlgorithm generated when source and target have different
+//algorithms
+type ErrorWrongAlgorithm struct {
+	source string
+	target string
+}
+
+func (e *ErrorWrongAlgorithm) Error() string {
+	return fmt.Sprintf("wrong algorithm: source %s target %s", e.source, e.target)
 }
