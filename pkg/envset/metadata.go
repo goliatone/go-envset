@@ -276,6 +276,10 @@ func LoadMetadataFile(path string) (*EnvFile, error) {
 //CompareMetadataFiles will compare two EnvFile instances
 func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
 
+	if a.Algorithm != b.Algorithm {
+		return false, &ErrorWrongAlgorithm{source: a.Algorithm, target: b.Algorithm}
+	}
+
 	if len(a.Sections) != len(b.Sections) {
 		return true, nil
 	}
