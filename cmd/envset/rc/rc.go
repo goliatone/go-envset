@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/goliatone/go-envset/pkg/config"
@@ -26,17 +27,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			&cli.StringFlag{Name: "secret", Usage: "`password` used to encode hash values", EnvVars: []string{"ENVSET_HASH_SECRET"}},
 		},
 		Action: func(c *cli.Context) error {
-			// print := c.Bool("print")
-			// envfile := c.String("env-file")
-			// filename := c.String("filename")
-			// originalDir := c.String("filepath")
-			// overwrite := c.Bool("overwrite")
-			// values := c.Bool("values")
-			// globals := c.Bool("globals")
-			// secret := c.String("secret")
-
 			fmt.Printf("%s", config.GetDefaultConfig())
-
 			return nil
 		},
 		Subcommands: []*cli.Command{
@@ -46,9 +37,25 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				UsageText:   "get option value for key",
 				Description: "retrieves configuration value of given key",
 				Action: func(c *cli.Context) error {
+					if c.Args().Len() == 0 {
+						return errors.New("envset config get requires exactly one argument, e.g.\nenvset config get <path>")
+					}
 					key := c.Args().First()
 					val := cnf.Get(key)
 					fmt.Println(val)
+					return nil
+				},
+			},
+			{
+				Name:        "list",
+				Usage:       "list available key paths",
+				UsageText:   "list available key paths",
+				Description: "prints a list of all key paths for configuration options",
+				Action: func(c *cli.Context) error {
+					keys := cnf.ListKeys()
+					for _, k := range keys {
+						fmt.Println(k)
+					}
 					return nil
 				},
 			},
