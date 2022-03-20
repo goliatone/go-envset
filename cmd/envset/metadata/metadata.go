@@ -73,13 +73,9 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			//TODO: This should take a a template file which we use to run against our thing
 			filename = filepath.Join(dir, filename)
 
-			fmt.Printf("passed value: %s\n", algorithm)
-
 			if secret != "" {
 				algorithm = envset.HashHMAC
 			}
-
-			fmt.Printf("option value: %s\n", algorithm)
 
 			o := envset.MetadataOptions{
 				Name:          envfile,

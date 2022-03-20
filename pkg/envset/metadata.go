@@ -70,7 +70,7 @@ func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
 func (e *EnvSection) makeHash(key, value string) (string, error) {
 	var err error
 	var hash string
-	fmt.Printf("make hash: %s\n", e.algorithm)
+
 	switch e.algorithm {
 	case HashHMAC:
 		hash, err = hmacSha256HashValue(value, e.secret)
@@ -202,7 +202,7 @@ func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 
 	ini.PrettyEqual = false
 	ini.PrettyFormat = false
-	fmt.Printf("create meta: %s\n", o.Algorithm)
+
 	algorithm := o.Algorithm
 	if o.Secret != "" {
 		algorithm = HashHMAC
