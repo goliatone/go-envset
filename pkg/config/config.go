@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/goliatone/go-envset/pkg/envset"
@@ -129,18 +131,71 @@ func (c *Config) Get(key string) string {
 	switch key {
 	case "filename":
 		return c.Filename
+	case "environments":
+		return printList(c.Environments.Name)
+	case "expand":
+		return strconv.FormatBool(c.Expand)
+	case "isolated":
+		return strconv.FormatBool(c.Isolated)
+	case "export_environment":
+		return c.ExportEnvName
 	case "meta.dir":
+		return c.Meta.Dir
+	case "metadata.dir":
 		return c.Meta.Dir
 	case "meta.file":
 		return c.Meta.File
+	case "metadata.file":
+		return c.Meta.File
 	case "meta.path":
+		return path.Join(c.Meta.Dir, c.Meta.File)
+	case "metadata.path":
 		return path.Join(c.Meta.Dir, c.Meta.File)
 	case "template.path":
 		return c.Template.Path
 	case "template.file":
 		return c.Template.File
+	case "ignored":
+		return printMap(c.Ignored)
+	case "required":
+		return printMap(c.Required)
 	default:
 		return ""
+	}
+}
+
+func printMap(s map[string][]string) string {
+	o := ""
+	for k, m := range s {
+		l := printList(m)
+		o += fmt.Sprintf("%s - \n%s", k, l)
+	}
+	return o
+}
+
+func printList(a []string) string {
+	o := ""
+	for _, s := range a {
+		o += fmt.Sprintf("%s\n", s)
+	}
+	return o
+}
+
+//ListKeys returns the list of config keys
+func (c *Config) ListKeys() []string {
+	return []string{
+		"filename",
+		"environments",
+		"expand",
+		"isolated",
+		"export_environment",
+		"meta.dir",
+		"meta.file",
+		"meta.path",
+		"template.path",
+		"template.file",
+		"ignored",
+		"required",
 	}
 }
 
