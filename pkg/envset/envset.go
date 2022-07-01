@@ -92,7 +92,7 @@ func Run(environment string, options RunOptions) error {
 	vars := context.ToKVStrings()
 
 	//Replace '${VAR}' in the executable cmd arguments
-	//note that if these are not in single quited they will
+	//note that if these are not in single quotes they will
 	//be resolved by the shell when we call envset and we will
 	//read the the result of that replacement, even if is empty.
 	InterpolateKVStrings(options.Args, context, options.Expand)
@@ -134,8 +134,8 @@ func Run(environment string, options RunOptions) error {
 //Print will show the current environment
 //We don't need to do variable replacement if we print since
 //the idea is to use it as a source
-func Print(environment, name string, isolated, expand bool) error {
-	filename, err := FileFinder(name)
+func Print(environment string, options RunOptions) error {
+	filename, err := FileFinder(options.Filename)
 	if err != nil {
 		return fmt.Errorf("file finder: %w", err)
 	}
@@ -160,7 +160,7 @@ func Print(environment, name string, isolated, expand bool) error {
 
 	//we don't have any values here. Is that what the user
 	//wants?
-	if len(sec.KeyStrings()) == 0 && isolated {
+	if len(sec.KeyStrings()) == 0 && options.Isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
 			for _, n := range names {
@@ -178,13 +178,13 @@ func Print(environment, name string, isolated, expand bool) error {
 	context := LoadIniSection(sec)
 
 	//Replace ${VAR} and $(command) in values
-	err = context.Expand(expand)
+	err = context.Expand(options.Expand)
 	if err != nil {
 		return fmt.Errorf("context expand: %w", err)
 	}
 
 	//----- actual print action
-	if isolated == false {
+	if options.Isolated == false {
 		for _, e := range os.Environ() {
 			fmt.Println(e)
 		}

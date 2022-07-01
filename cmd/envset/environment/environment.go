@@ -70,7 +70,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			}
 
 			if ecmd.Cmd == "" {
-				return envset.Print(env, ro.Filename, ro.Isolated, ro.Expand)
+				return envset.Print(env, ro)
 			}
 
 			return envset.Run(env, ro)

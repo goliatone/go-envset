@@ -138,7 +138,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 		//we called something like:
 		//envset --env-file=.env
 		//envset --env-file=.envset --env=development
-		return envset.Print(env, o.Filename, o.Isolated, o.Expand)
+		return envset.Print(env, o)
 	}
 
 	//TODO: we should process args to remove executable context
