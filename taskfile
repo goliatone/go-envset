@@ -28,11 +28,13 @@ PATH=./src/bin:$PATH
 
 ## -----
 ## dev:test
-## 
+##
 ## Run go tests
 ##
 function dev:test {
-    go test ./... -v
+    # lgr exec -- ./taskfile build
+    # lgr exec -- cp ./bin/darwin/envset ./cmd/envset
+    lgr exec --no-timestamp -- go test ./... -v
 }
 
 function wrk:dev {
@@ -47,21 +49,21 @@ function wrk:dev {
 
 ## -----
 ## release:build
-## 
+##
 ## Install binary and service on host machine.
 ## We can pass an env file with values that will
 ## be available for the running service.
-## 
+##
 ## Globals:
 ##  PROJECT - $PROJECT
 ##  BINNAME
 ##  ENTRYPOINT
-## 
+##
 ## Arguments:
 ## @arg 1 {string} [tag=0.0.1]
 function build {
     lgr I "running build..."
-    
+
     VERSION=$(version:upsert $1)
     BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
     RELBIN="./bin/darwin"
@@ -69,7 +71,7 @@ function build {
     mkdir -p ${RELBIN}
 
     LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
-    
+
     lgr exec -- go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
 }
 
@@ -80,9 +82,9 @@ function build {
 ##
 ## Bump our current version, create a git tag
 ## and push to trigger our release flow.
-## 
+##
 ## Arguments:
-## @arg 1 {string} [level=patch] 
+## @arg 1 {string} [level=patch]
 ##        Accepted major, minor, patch
 function release {
     local tag
@@ -128,15 +130,15 @@ function release {
 ##
 ## Save version to meta file.
 ## First time will create file if not present
-## 
+##
 ## Arguments:
 ## @arg 1 {string} [tag=0.0.1]
 function version:upsert {
     local tag=${1}
 
-    if [ -z "$tag" ]; then 
+    if [ -z "$tag" ]; then
         version:get
-    else 
+    else
         version:set "$tag"
         version:get
     fi
@@ -149,13 +151,13 @@ function version:upsert {
 ##
 ## Get version from meta file.
 function version:get {
-    
+
     test -f ${VERSION_FILE} || touch ${VERSION_FILE}
 
     local tag
     tag=$(cat ${VERSION_FILE})
 
-    if [ -z "$tag" ]; then 
+    if [ -z "$tag" ]; then
         tag="0.0.1"
         version:set "$tag"
     fi
@@ -170,13 +172,13 @@ function version:get {
 ##
 ## Set and save version to meta file.
 ## First time will create file if not present.
-## 
+##
 ## Arguments:
 ## @arg 1 {string} [tag=0.0.1]
 function version:set {
     local tag
     tag=${1}
-    if [ -z "$tag" ]; then 
+    if [ -z "$tag" ]; then
         exit 1
     fi
 
@@ -192,21 +194,21 @@ function version:set {
 ## - patch (default)
 ## - minor
 ## - major
-## 
+##
 ## @see https://github.com/fsaintjacques/semver-tool/blob/master/src/semver
 ##
 ## @arg 1 {string} [level=patch]
 ## Outputs:
 ##   Semver string "$major.$minor.$patch"
 function version:bump {
-    # Read contents of version and store in 
+    # Read contents of version and store in
     IFS='.' read -ra identifiers < "$VERSION_FILE"
-    
+
     [[ "${#identifiers[@]}" -ne 3 ]] && echo "Invalid semver string" && return 1
-    
-    #If we don't provide a second argument make patch increment 
+
+    #If we don't provide a second argument make patch increment
     [[ "$#" -eq 0 ]] && level='patch' || level=$1
-    
+
     patch=${identifiers[2]}
     minor=${identifiers[1]}
     major=${identifiers[0]}
@@ -248,7 +250,7 @@ function ci:build {
     BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
 
     LDFLAGS="-X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
-    
+
     echo "building version: ${VERSION}"
     echo "go build -ldflags ${LDFLAGS}"
 
@@ -305,10 +307,10 @@ function help {
     echo ""
     echo "Project: ${PROJECT}"
     echo ""
-   
+
     prog="$0"
     me=$(basename "$prog")
-    
+
     grep -e '^##[[:space:]]' -e '^##$' "$prog" | sed -e 's/^##//' -e "s/_PROG_/$me/" 1>&2
     echo ""
     echo ""
