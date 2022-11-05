@@ -125,7 +125,7 @@ Sometimes the command you want to run will assume that has access to predefined 
 ```console
 $ envset development -- spd-say '${APP_ENV}'
 Failed to connect to Speech Dispatcher:
-Error: Can't connect to unix socket ~/.cache/speech-dispatcher/speechd.sock: No such file or directory. Autospawn: Autospawn failed. Speech Dispatcher refused to start with error code, stating this as a reason: 
+Error: Can't connect to unix socket ~/.cache/speech-dispatcher/speechd.sock: No such file or directory. Autospawn: Autospawn failed. Speech Dispatcher refused to start with error code, stating this as a reason:
 exit status 1
 ```
 
@@ -254,7 +254,7 @@ Pretty output
 ❓ Different    NEW_THING       8896f09440c1...
 
 
-👻 Missing in source (1) | 🌱 Missing in target (1) 
+👻 Missing in source (1) | 🌱 Missing in target (1)
 
 ❓ Different values (2)  | 🤷 Ignored Keys (0)
 ```
@@ -343,6 +343,25 @@ APP_BASE_URL=https://localhost:3003
 APP_BASE_URL=https://envset.sh
 ```
 
+Your `.envset` files can have global variables that you are not part of any section but can be used to do string interpolation in section's variable values.
+
+The syntax to interpolate is `%(KEY)s`.
+
+```ini
+VERSION=v0.6.2
+
+[development]
+APP_BASE_URL=https://localhost:3003
+DOWNLOAD_URL=%(APP_BASE_URL)s/%(VERSION)s
+
+[production]
+APP_BASE_URL=https://envset.sh
+DOWNLOAD_URL=%(APP_BASE_URL)s/%(VERSION)s
+```
+
+You can have a special section with comments and the content will not generate syntax errors.
+
+
 ### <a name='Commands'></a>Commands
 
 The following is a list of the available commands:
@@ -377,18 +396,21 @@ You can create an `.envsetrc` file with configuration options for `envset`.
 
 The default `.envsetrc` looks like this:
 
-```
+```ini
+# Default configuration
+filename=.envset
 expand=true
 isolated=true
-filename=.envset
 export_environment=APP_ENV
 
 [metadata]
 dir=.meta
 file=data.json
+print=true
+json=false
 
 [template]
-path=.
+dir=.
 file=envset.example
 
 [environments]
@@ -396,6 +418,10 @@ name=test
 name=staging
 name=production
 name=development
+
+[comments]
+key=COMMENTS
+key=DOCUMENTATION
 ```
 
 ### <a name='Configuration'></a>Configuration

@@ -90,15 +90,15 @@ func Run(environment string, options RunOptions) error {
 	//read the the result of that replacement, even if is empty.
 	InterpolateKVStrings(options.Args, context, options.Expand)
 
-	command := exec.Command(options.Cmd, options.Args...)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-
 	//If we want to check for required variables do it now.
 	missing := context.GetMissingKeys(options.Required)
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
 	}
+
+	command := exec.Command(options.Cmd, options.Args...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
 
 	//If we want to run in an isolated context we just use
 	//our variables from the loaded file
@@ -111,7 +111,6 @@ func Run(environment string, options RunOptions) error {
 			}
 		}
 	} else {
-
 		local := LocalEnv()
 		for k, v := range context {
 			//TODO: what do we get if we have unset variables
