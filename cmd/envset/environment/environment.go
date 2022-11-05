@@ -52,7 +52,6 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 		},
 		Action: func(c *cli.Context) error {
 			//TODO: we want to support .env.local => [local]
-
 			env := c.Command.Name
 
 			required := c.StringSlice("required")

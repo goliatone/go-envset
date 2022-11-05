@@ -62,7 +62,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 
 	subcommands := []*cli.Command{}
 
-	for _, env := range cnf.Environments.Name {
+	for _, env := range cnf.Environments.Names {
 		subcommands = append(subcommands, environment.GetCommand(env, ecmd, cnf))
 	}
 
@@ -116,12 +116,14 @@ func run(args []string, ecmd exec.ExecCmd) {
 		env := c.String("env")
 
 		o := envset.RunOptions{
-			Cmd:      ecmd.Cmd,
-			Args:     ecmd.Args,
-			Expand:   c.Bool("expand"),
-			Isolated: c.Bool("isolated"),
-			Filename: c.String("env-file"),
+			Cmd:                 ecmd.Cmd,
+			Args:                ecmd.Args,
+			Expand:              c.Bool("expand"),
+			Isolated:            c.Bool("isolated"),
+			Filename:            c.String("env-file"),
+			CommentSectionNames: cnf.CommentSectionNames.Keys,
 		}
+
 		//Run if we have something like this:
 		// envset --env-file=.env -- node index.js
 		// envset --env-file=.envset --env=development -- node index.js
@@ -145,6 +147,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 	//and return the arguments that are only for envset
 	err = app.Run(args)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(1)
 	}
 }
