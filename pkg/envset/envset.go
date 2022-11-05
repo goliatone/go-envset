@@ -31,29 +31,12 @@ type RunOptions struct {
 
 //Run will run the given command after loading the environment
 func Run(environment string, options RunOptions) error {
-	//TODO: This might be an issue here!
-	filename, err := FileFinder(options.Filename)
+	env, err := getEnv(options)
 	if err != nil {
-		return fmt.Errorf("file finder %s: %w", options.Filename, err)
+		return err
 	}
 
-	//EnvFile.Load(filename)
-	env, err := ini.Load(filename)
-
-	if err != nil {
-		if ini.IsErrDelimiterNotFound(err) {
-			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
-			fmt.Println("It looks as if you forgot a variable name.")
-			delErr := err.(ini.ErrDelimiterNotFound)
-			if errors.As(err, &delErr) {
-				fmt.Printf("The offending line content: %s\n", delErr.Line)
-			}
-		}
-		//error parsing data source: unknown type
-		return fmt.Errorf("file load: %w", err)
-	}
-
-	//check to see if we have this section at all
+	// check to see if we have this section at all
 	names := env.SectionStrings()
 	if sort.SearchStrings(names, environment) == len(names) {
 		return envFileErrorNotFound{err, "section not found"}
@@ -64,8 +47,8 @@ func Run(environment string, options RunOptions) error {
 		return envSectionErrorNotFound{err, "section not found"}
 	}
 
-	//we don't have any values here. Is that what the user
-	//wants?
+	// we don't have any values here.
+	// Is that what the user wants?
 	if len(sec.KeyStrings()) == 0 && options.Isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
@@ -145,28 +128,9 @@ func Run(environment string, options RunOptions) error {
 //We don't need to do variable replacement if we print since
 //the idea is to use it as a source
 func Print(environment string, options RunOptions) error {
-	filename, err := FileFinder(options.Filename)
+	env, err := getEnv(options)
 	if err != nil {
-		return fmt.Errorf("file finder: %w", err)
-	}
-
-	//TODO: handle other formats, e.g JSON/YML
-	env, err := ini.LoadSources(ini.LoadOptions{
-		UnparseableSections:     []string{"NOTES"},
-		SkipUnrecognizableLines: true,
-	}, filename)
-
-	if err != nil {
-		if ini.IsErrDelimiterNotFound(err) {
-			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
-			fmt.Println("It looks as if you forgot a variable name.")
-			delErr := err.(ini.ErrDelimiterNotFound)
-			if errors.As(err, &delErr) {
-				fmt.Printf("The offending line content: %s\n", delErr.Line)
-			}
-		}
-		//error parsing data source: unknown type
-		return fmt.Errorf("file load: %w", err)
+		return err
 	}
 
 	//check to see if we have this section at all
@@ -246,4 +210,33 @@ func FileFinder(filename string) (string, error) {
 		dirname = filepath.Clean(dirname + "/..")
 	}
 	return "", envFileErrorNotFound{nil, "file not found"}
+}
+
+func getEnv(options RunOptions) (*ini.File, error) {
+	//TODO: This might be an issue here!
+	filename, err := FileFinder(options.Filename)
+	if err != nil {
+		return nil, fmt.Errorf("file finder %s: %w", options.Filename, err)
+	}
+
+	//EnvFile.Load(filename)
+	//TODO: handle other formats, e.g JSON/YML
+	env, err := ini.LoadSources(ini.LoadOptions{
+		UnparseableSections:     options.CommentSectionNames,
+		SkipUnrecognizableLines: true,
+	}, filename)
+
+	if err != nil {
+		if ini.IsErrDelimiterNotFound(err) {
+			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
+			fmt.Println("It looks as if you forgot a variable name.")
+			delErr := err.(ini.ErrDelimiterNotFound)
+			if errors.As(err, &delErr) {
+				fmt.Printf("The offending line content: %s\n", delErr.Line)
+			}
+		}
+		//error parsing data source: unknown type
+		return nil, fmt.Errorf("file load: %w", err)
+	}
+	return env, err
 }
