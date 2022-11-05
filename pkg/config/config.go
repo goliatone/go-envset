@@ -32,6 +32,10 @@ name=test
 name=staging
 name=production
 name=development
+
+[comments]
+key=COMMENTS
+key=DOCUMENTATION
 `)
 
 //Config has the rc config options
@@ -39,8 +43,11 @@ type Config struct {
 	Name         string
 	Filename     string `ini:"filename"`
 	Environments struct {
-		Name []string `ini:"name,omitempty,allowshadow"`
+		Names []string `ini:"name,omitempty,allowshadow"`
 	} `ini:"environments"`
+	CommentSectionNames struct {
+		Keys []string `ini:"key,omitempty,allowshadow"`
+	} `ini:"comments"`
 	Created       time.Time `ini:"-"`
 	Expand        bool      `ini:"expand"`
 	Isolated      bool      `ini:"isolated"`

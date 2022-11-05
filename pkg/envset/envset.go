@@ -1,6 +1,7 @@
 package envset
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,15 +17,16 @@ const DefaultSection = ini.DEFAULT_SECTION
 
 //RunOptions is used to configure a run command
 type RunOptions struct {
-	Filename      string
-	Cmd           string
-	Args          []string
-	Isolated      bool
-	Expand        bool
-	Required      []string
-	Inherit       []string
-	Ignored       []string
-	ExportEnvName string
+	Filename            string
+	Cmd                 string
+	Args                []string
+	Isolated            bool
+	Expand              bool
+	Required            []string
+	Inherit             []string
+	Ignored             []string
+	ExportEnvName       string
+	CommentSectionNames []string
 }
 
 //Run will run the given command after loading the environment
@@ -39,7 +41,16 @@ func Run(environment string, options RunOptions) error {
 	env, err := ini.Load(filename)
 
 	if err != nil {
-		return envFileErrorNotFound{err, "file not found"}
+		if ini.IsErrDelimiterNotFound(err) {
+			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
+			fmt.Println("It looks as if you forgot a variable name.")
+			delErr := err.(ini.ErrDelimiterNotFound)
+			if errors.As(err, &delErr) {
+				fmt.Printf("The offending line content: %s\n", delErr.Line)
+			}
+		}
+		//error parsing data source: unknown type
+		return fmt.Errorf("file load: %w", err)
 	}
 
 	//check to see if we have this section at all
@@ -58,7 +69,6 @@ func Run(environment string, options RunOptions) error {
 	if len(sec.KeyStrings()) == 0 && options.Isolated {
 		if environment == DefaultSection {
 			//running in DEFAULT but loaded an env file without a section name
-			// fmt.Println("we have a the follow sections but not what you want")
 			for _, n := range names {
 				if n == DefaultSection {
 					continue
@@ -141,10 +151,22 @@ func Print(environment string, options RunOptions) error {
 	}
 
 	//TODO: handle other formats, e.g JSON/YML
-	env, err := ini.Load(filename)
+	env, err := ini.LoadSources(ini.LoadOptions{
+		UnparseableSections:     []string{"NOTES"},
+		SkipUnrecognizableLines: true,
+	}, filename)
 
 	if err != nil {
-		return envFileErrorNotFound{err, "file not found"}
+		if ini.IsErrDelimiterNotFound(err) {
+			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
+			fmt.Println("It looks as if you forgot a variable name.")
+			delErr := err.(ini.ErrDelimiterNotFound)
+			if errors.As(err, &delErr) {
+				fmt.Printf("The offending line content: %s\n", delErr.Line)
+			}
+		}
+		//error parsing data source: unknown type
+		return fmt.Errorf("file load: %w", err)
 	}
 
 	//check to see if we have this section at all
