@@ -9,6 +9,7 @@
 * [Similar Tools](#SimilarTools)
 * [Examples](#Examples)
 	* [Executing A Command](#ExecutingACommand)
+		* [Restart Command](#RestartCommand)
 		* [Variable Substitution](#VariableSubstitution)
 		* [Inherit Environment](#InheritEnvironment)
 		* [Overwriting Variables At Runtime](#OverwritingVariablesAtRuntime)
@@ -100,11 +101,26 @@ APP_SECRET_TOKEN=796bca0f-2692-495b-a994-e8ce82cad55f
 APP_REMOTE_SERVICE_KEY=5655969e-af9f-4ac5-b186-184f43468443
 ```
 
-
 To use it, simply prefix the call to your program with `envset` and the name of the environment section. The node `app.js` will be running with the environment variables specified in the **development** section of the **.envset** file.
 
 ```console
 $ envset development -- node app.js
+```
+
+#### <a name='RestartCommand'></a>Restart Command
+
+`envset` will optionally restart your command if it exits with an error code.
+There are three flags you can use to manage the restart behavior:
+* `--restart`: Restart command on exit error, default to `true`.
+* `--max-restarts [int]`: Max times to restart command, defaults to `3`.
+* `--forever`: If present restart the command for as long as `envset` is running.
+
+All these can be configured using an `.envsetrc` [file](#envsetrc).
+
+This will restart the node app for a maximum of `--max-restarts`.
+
+```console
+$ envset development --restart --max-restarts 10 -- node app.js
 ```
 
 #### <a name='VariableSubstitution'></a>Variable Substitution
@@ -402,6 +418,9 @@ filename=.envset
 expand=true
 isolated=true
 export_environment=APP_ENV
+restart=true
+max_restarts=3
+restart_forever=false
 
 [metadata]
 dir=.meta
