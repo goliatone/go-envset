@@ -2,6 +2,7 @@ package environment
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
@@ -49,6 +50,22 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 				Aliases: []string{"I"},
 				Usage:   "list of env vars to inherit from shell",
 			},
+			&cli.BoolFlag{
+				Name:  "restart",
+				Usage: "re-execute command when it exit is error code",
+				Value: cnf.Restart,
+			},
+			&cli.BoolFlag{
+				Name:  "forever",
+				Usage: "forever re-execute command when it exit is error code",
+				Value: cnf.RestartForever,
+			},
+			&cli.IntFlag{
+				Name:    "max-restarts",
+				Aliases: []string{"max-restart"},
+				Usage:   "times to restart failed command",
+				Value:   cnf.MaxRestarts,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			//TODO: we want to support .env.local => [local]
@@ -57,22 +74,32 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			required := c.StringSlice("required")
 			required = cnf.MergeRequired(env, required)
 
-			ro := envset.RunOptions{
-				Cmd:           ecmd.Cmd,
-				Args:          ecmd.Args,
-				Isolated:      c.Bool("isolated"),
-				Expand:        c.Bool("expand"),
-				Required:      c.StringSlice("required"),
-				Inherit:       c.StringSlice("inherit"),
-				Filename:      c.String("env-file"),
-				ExportEnvName: c.String("export-env-name"),
+			max := c.Int("max-restarts")
+			restart := c.Bool("restart")
+			if c.Bool("forever") {
+				max = math.MaxInt
+				restart = true
+			}
+
+			o := envset.RunOptions{
+				Cmd:                 ecmd.Cmd,
+				Args:                ecmd.Args,
+				Isolated:            c.Bool("isolated"),
+				Expand:              c.Bool("expand"),
+				Filename:            c.String("env-file"),
+				CommentSectionNames: cnf.CommentSectionNames.Keys,
+				Required:            required,
+				Inherit:             c.StringSlice("inherit"),
+				ExportEnvName:       c.String("export-env-name"),
+				Restart:             restart,
+				MaxRestarts:         max,
 			}
 
 			if ecmd.Cmd == "" {
-				return envset.Print(env, ro)
+				return envset.Print(env, o)
 			}
 
-			return envset.Run(env, ro)
+			return envset.Run(env, o)
 		},
 	}
 }

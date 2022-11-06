@@ -27,53 +27,37 @@ type RunOptions struct {
 	Ignored             []string
 	ExportEnvName       string
 	CommentSectionNames []string
+	Restart             bool
+	MaxRestarts         int
 }
+
+var runs = 1
 
 //Run will run the given command after loading the environment
 func Run(environment string, options RunOptions) error {
-	env, err := getEnv(options)
+	err := doRun(environment, options)
+	if err != nil {
+		if options.Restart {
+			if runs < options.MaxRestarts {
+				runs = runs + 1 //if we restart for ever this will grow
+				return Run(environment, options)
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func doRun(environment string, options RunOptions) error {
+	env, err := getEnvFile(options)
 	if err != nil {
 		return err
 	}
 
-	// check to see if we have this section at all
-	names := env.SectionStrings()
-	if sort.SearchStrings(names, environment) == len(names) {
-		return envFileErrorNotFound{err, "section not found"}
-	}
-
-	sec, err := env.GetSection(environment)
+	context, err := getContext(environment, env, options)
 	if err != nil {
-		return envSectionErrorNotFound{err, "section not found"}
+		return err
 	}
-
-	// we don't have any values here.
-	// Is that what the user wants?
-	if len(sec.KeyStrings()) == 0 && options.Isolated {
-		if environment == DefaultSection {
-			//running in DEFAULT but loaded an env file without a section name
-			for _, n := range names {
-				if n == DefaultSection {
-					continue
-				}
-				fmt.Printf("- %s\n", n)
-			}
-		}
-
-		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
-	}
-
-	//Ensure we export the env name to the environment
-	//e.g. APP_ENV=development
-	if !sec.HasKey(options.ExportEnvName) {
-		sec.NewKey(options.ExportEnvName, environment)
-	} else {
-		sec.DeleteKey(options.ExportEnvName)
-		sec.NewKey(options.ExportEnvName, environment)
-	}
-
-	//Build context object from section key/values
-	context := LoadIniSection(sec)
 
 	//Replace ${VAR} and $(command) in values
 	err = context.Expand(options.Expand)
@@ -119,7 +103,8 @@ func Run(environment string, options RunOptions) error {
 			}
 		}
 	}
-
+	//We want to Start and watch for errors. If it crashes we
+	//might want to restart.
 	return command.Run()
 }
 
@@ -127,40 +112,15 @@ func Run(environment string, options RunOptions) error {
 //We don't need to do variable replacement if we print since
 //the idea is to use it as a source
 func Print(environment string, options RunOptions) error {
-	env, err := getEnv(options)
+	env, err := getEnvFile(options)
 	if err != nil {
 		return err
 	}
 
-	//check to see if we have this section at all
-	names := env.SectionStrings()
-	if sort.SearchStrings(names, environment) == len(names) {
-		return envFileErrorNotFound{err, "section not found"}
-	}
-
-	sec, err := env.GetSection(environment)
+	context, err := getContext(environment, env, options)
 	if err != nil {
-		return envSectionErrorNotFound{err, "section not found"}
+		return err
 	}
-
-	//we don't have any values here. Is that what the user
-	//wants?
-	if len(sec.KeyStrings()) == 0 && options.Isolated {
-		if environment == DefaultSection {
-			//running in DEFAULT but loaded an env file without a section name
-			for _, n := range names {
-				if n == DefaultSection {
-					continue
-				}
-				fmt.Printf("- %s\n", n)
-			}
-		}
-
-		return envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
-	}
-
-	//Build context object from section key/values
-	context := LoadIniSection(sec)
 
 	//Replace ${VAR} and $(command) in values
 	err = context.Expand(options.Expand)
@@ -211,15 +171,22 @@ func FileFinder(filename string) (string, error) {
 	return "", envFileErrorNotFound{nil, "file not found"}
 }
 
-func getEnv(options RunOptions) (*ini.File, error) {
-	//TODO: This might be an issue here!
-	filename, err := FileFinder(options.Filename)
+func getContext(environment string, env *ini.File, options RunOptions) (EnvMap, error) {
+	sec, err := getSec(environment, env, options)
+	if err != nil {
+		return EnvMap{}, err
+	}
+	//Build context object from section key/values
+	context := LoadIniSection(sec)
+	return context, nil
+}
+
+func getEnvFile(options RunOptions) (*ini.File, error) {
+	filename, err := FileFinder(options.Filename) //TODO: This might be an issue here!
 	if err != nil {
 		return nil, fmt.Errorf("file finder %s: %w", options.Filename, err)
 	}
 
-	//EnvFile.Load(filename)
-	//TODO: handle other formats, e.g JSON/YML
 	env, err := ini.LoadSources(ini.LoadOptions{
 		UnparseableSections:     options.CommentSectionNames,
 		SkipUnrecognizableLines: true,
@@ -238,4 +205,47 @@ func getEnv(options RunOptions) (*ini.File, error) {
 		return nil, fmt.Errorf("file load: %w", err)
 	}
 	return env, err
+}
+
+func getSec(environment string, env *ini.File, options RunOptions) (*ini.Section, error) {
+	// check to see if we have this section at all
+	names := env.SectionStrings()
+	if sort.SearchStrings(names, environment) == len(names) {
+		return nil, fmt.Errorf("section not defined in envsetrc")
+	}
+
+	sec, err := env.GetSection(environment)
+	if err != nil {
+		return nil, envSectionErrorNotFound{
+			err,
+			fmt.Sprintf("run: section [%s] not found in env file", environment),
+		}
+	}
+
+	// we don't have any values here.
+	// Is that what the user wants?
+	if len(sec.KeyStrings()) == 0 && options.Isolated {
+		if environment == DefaultSection {
+			//running in DEFAULT but loaded an env file without a section name
+			for _, n := range names {
+				if n == DefaultSection {
+					continue
+				}
+				fmt.Printf("- %s\n", n)
+			}
+		}
+
+		return nil, envSectionErrorNotFound{err, fmt.Sprintf("environment %s has not key=values", environment)}
+	}
+
+	//Ensure we export the env name to the environment
+	//e.g. APP_ENV=development
+	if !sec.HasKey(options.ExportEnvName) {
+		sec.NewKey(options.ExportEnvName, environment)
+	} else {
+		sec.DeleteKey(options.ExportEnvName)
+		sec.NewKey(options.ExportEnvName, environment)
+	}
+
+	return sec, nil
 }

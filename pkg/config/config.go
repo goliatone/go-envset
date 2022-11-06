@@ -16,6 +16,9 @@ filename=.envset
 expand=true
 isolated=true
 export_environment=APP_ENV
+restart=true
+max_restarts=3
+restart_forever=false
 
 [metadata]
 dir=.meta
@@ -40,30 +43,45 @@ key=DOCUMENTATION
 
 //Config has the rc config options
 type Config struct {
-	Name         string
-	Filename     string `ini:"filename"`
-	Environments struct {
-		Names []string `ini:"name,omitempty,allowshadow"`
-	} `ini:"environments"`
-	CommentSectionNames struct {
-		Keys []string `ini:"key,omitempty,allowshadow"`
-	} `ini:"comments"`
-	Created       time.Time `ini:"-"`
-	Expand        bool      `ini:"expand"`
-	Isolated      bool      `ini:"isolated"`
-	ExportEnvName string    `ini:"export_environment"`
-	Meta          struct {
-		Dir    string `ini:"dir"`
-		File   string `ini:"file"`
-		Print  bool   `ini:"print"`
-		AsJSON bool   `ini:"json"`
-	} `ini:"metadata"`
-	Template struct {
-		Dir  string `ini:"dir"`
-		File string `ini:"file"`
-	} `ini:"template"`
-	Ignored  map[string][]string
-	Required map[string][]string
+	Name                string
+	Filename            string               `ini:"filename"`
+	Environments        *Environments        `ini:"environments"`
+	CommentSectionNames *CommentSectionNames `ini:"comments"`
+	Created             time.Time            `ini:"-"`
+	Expand              bool                 `ini:"expand"`
+	Isolated            bool                 `ini:"isolated"`
+	ExportEnvName       string               `ini:"export_environment"`
+	Meta                *Meta                `ini:"metadata"`
+	Template            *Template            `ini:"template"`
+	Ignored             map[string][]string
+	Required            map[string][]string
+	Restart             bool `ini:"restart"`
+	RestartForever      bool `ini:"restart_forever"`
+	MaxRestarts         int  `ini:"max_restarts"`
+}
+
+//Environments holds the environment names
+type Environments struct {
+	Names []string `ini:"name,omitempty,allowshadow"`
+}
+
+//CommentSectionNames are the sections that will be ignored
+type CommentSectionNames struct {
+	Keys []string `ini:"key,omitempty,allowshadow"`
+}
+
+//Meta are options for the metadata command
+type Meta struct {
+	Dir    string `ini:"dir"`
+	File   string `ini:"file"`
+	Print  bool   `ini:"print"`
+	AsJSON bool   `ini:"json"`
+}
+
+//Template are options to generate the template output
+type Template struct {
+	Dir  string `ini:"dir"`
+	File string `ini:"file"`
 }
 
 //Load returns configuration object from `.envsetrc` file
@@ -84,9 +102,8 @@ func Load(name string) (*Config, error) {
 		return &Config{}, err
 	}
 
-	c := new(Config)
+	c := newConfig()
 	err = cfg.MapTo(c)
-
 	if err != nil {
 		return &Config{}, err
 	}
@@ -196,4 +213,34 @@ func (c *Config) ListKeys() []string {
 //config string
 func GetDefaultConfig() string {
 	return string(config)
+}
+
+func newConfig() *Config {
+	c := new(Config)
+	c.Filename = ".envset"
+	c.Expand = true
+	c.Isolated = true
+	c.ExportEnvName = "APP_ENV"
+	c.Restart = true
+	c.MaxRestarts = 3
+	c.RestartForever = false
+	c.Meta = &Meta{
+		Dir:    ".meta",
+		File:   "data.json",
+		Print:  true,
+		AsJSON: false,
+	}
+	c.Template = &Template{
+		Dir:  ".",
+		File: "envset.example",
+	}
+	c.Environments = &Environments{
+		Names: []string{
+			"test",
+			"staging",
+			"production",
+			"development",
+		},
+	}
+	return c
 }
