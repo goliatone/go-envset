@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"time"
 
@@ -101,6 +102,33 @@ func run(args []string, ecmd exec.ExecCmd) {
 			Aliases: []string{"R"},
 			Usage:   "list of key names that are required to run",
 		},
+		&cli.StringFlag{
+			Name:    "export-env-name",
+			Aliases: []string{"N"},
+			Usage:   "name of exported variable with current environment name",
+			Value:   cnf.ExportEnvName,
+		},
+		&cli.StringSliceFlag{
+			Name:    "inherit",
+			Aliases: []string{"I"},
+			Usage:   "list of env vars to inherit from shell",
+		},
+		&cli.BoolFlag{
+			Name:  "restart",
+			Usage: "re-execute command when it exit is error code",
+			Value: cnf.Restart,
+		},
+		&cli.BoolFlag{
+			Name:  "forever",
+			Usage: "forever re-execute command when it exit is error code",
+			Value: cnf.RestartForever,
+		},
+		&cli.IntFlag{
+			Name:    "max-restarts",
+			Aliases: []string{"max-restart"},
+			Usage:   "times to restart failed command",
+			Value:   cnf.MaxRestarts,
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
@@ -115,13 +143,26 @@ func run(args []string, ecmd exec.ExecCmd) {
 
 		env := c.String("env")
 
+		required := c.StringSlice("required")
+		required = cnf.MergeRequired(env, required)
+
+		max := c.Int("max-restarts")
+		if c.Bool("forever") {
+			max = math.MaxInt
+		}
+
 		o := envset.RunOptions{
 			Cmd:                 ecmd.Cmd,
 			Args:                ecmd.Args,
-			Expand:              c.Bool("expand"),
 			Isolated:            c.Bool("isolated"),
+			Expand:              c.Bool("expand"),
 			Filename:            c.String("env-file"),
 			CommentSectionNames: cnf.CommentSectionNames.Keys,
+			Required:            required,
+			Inherit:             c.StringSlice("inherit"),
+			ExportEnvName:       c.String("export-env-name"),
+			Restart:             c.Bool("restart"),
+			MaxRestarts:         max,
 		}
 
 		//Run if we have something like this:
