@@ -12,10 +12,10 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-//DefaultSection is the name of the default ini section
+// DefaultSection is the name of the default ini section
 const DefaultSection = ini.DEFAULT_SECTION
 
-//RunOptions is used to configure a run command
+// RunOptions is used to configure a run command
 type RunOptions struct {
 	Filename            string
 	Cmd                 string
@@ -33,7 +33,7 @@ type RunOptions struct {
 
 var runs = 1
 
-//Run will run the given command after loading the environment
+// Run will run the given command after loading the environment
 func Run(environment string, options RunOptions) error {
 	err := doRun(environment, options)
 	if err != nil {
@@ -108,9 +108,9 @@ func doRun(environment string, options RunOptions) error {
 	return command.Run()
 }
 
-//Print will show the current environment
-//We don't need to do variable replacement if we print since
-//the idea is to use it as a source
+// Print will show the current environment
+// We don't need to do variable replacement if we print since
+// the idea is to use it as a source
 func Print(environment string, options RunOptions) error {
 	env, err := getEnvFile(options)
 	if err != nil {
@@ -147,7 +147,7 @@ func Print(environment string, options RunOptions) error {
 	return nil
 }
 
-//FileFinder will find the file and return its full path
+// FileFinder will find the file and return its full path
 func FileFinder(filename string) (string, error) {
 	if filepath.IsAbs(filename) {
 		return filename, nil
@@ -241,9 +241,6 @@ func getSec(environment string, env *ini.File, options RunOptions) (*ini.Section
 	//Ensure we export the env name to the environment
 	//e.g. APP_ENV=development
 	if !sec.HasKey(options.ExportEnvName) {
-		sec.NewKey(options.ExportEnvName, environment)
-	} else {
-		sec.DeleteKey(options.ExportEnvName)
 		sec.NewKey(options.ExportEnvName, environment)
 	}
 

@@ -91,6 +91,14 @@ function release {
     local level
     local message
 
+    # Fetch all changes from origin
+    git fetch --all
+    # Make sure we have the latest version file
+    git checkout origin/master -- ".version"
+
+    # Pull tags to make sure we have
+    git pull --tags -f
+
     level=${1:-"patch"}
 
     # Bump our version
@@ -101,9 +109,6 @@ function release {
 
     # Update version file
     version:set "${tag}"
-
-    # Update local tags
-    git pull --tags
 
     # Add updated version file to git
     git add "${VERSION_FILE}"
