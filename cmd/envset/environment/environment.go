@@ -10,8 +10,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-//GetCommand export command
+var excludeFromRestart bool
+
+// GetCommand export command
 func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command {
+
+	excludeFromRestart = cnf.RestartForEnv(env)
+
 	return &cli.Command{
 		Name:        env,
 		Usage:       fmt.Sprintf("load \"%s\" environment in current shell session", env),
@@ -53,7 +58,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			&cli.BoolFlag{
 				Name:  "restart",
 				Usage: "re-execute command when it exit is error code",
-				Value: cnf.Restart,
+				Value: excludeFromRestart,
 			},
 			&cli.BoolFlag{
 				Name:  "forever",
@@ -76,7 +81,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 
 			max := c.Int("max-restarts")
 			restart := c.Bool("restart")
-			if c.Bool("forever") {
+			if c.Bool("forever") && !excludeFromRestart {
 				max = math.MaxInt
 				restart = true
 			}

@@ -19,6 +19,7 @@ export_environment=APP_ENV
 restart=true
 max_restarts=3
 restart_forever=false
+restart_exclude=test
 
 [metadata]
 dir=.meta
@@ -41,7 +42,7 @@ key=COMMENTS
 key=DOCUMENTATION
 `)
 
-//Config has the rc config options
+// Config has the rc config options
 type Config struct {
 	Name                string
 	Filename            string               `ini:"filename"`
@@ -55,22 +56,23 @@ type Config struct {
 	Template            *Template            `ini:"template"`
 	Ignored             map[string][]string
 	Required            map[string][]string
-	Restart             bool `ini:"restart"`
-	RestartForever      bool `ini:"restart_forever"`
-	MaxRestarts         int  `ini:"max_restarts"`
+	Restart             bool     `ini:"restart"`
+	ExcludeFromRestart  []string `ini:"restart_exclude"`
+	RestartForever      bool     `ini:"restart_forever"`
+	MaxRestarts         int      `ini:"max_restarts"`
 }
 
-//Environments holds the environment names
+// Environments holds the environment names
 type Environments struct {
 	Names []string `ini:"name,omitempty,allowshadow"`
 }
 
-//CommentSectionNames are the sections that will be ignored
+// CommentSectionNames are the sections that will be ignored
 type CommentSectionNames struct {
 	Keys []string `ini:"key,omitempty,allowshadow"`
 }
 
-//Meta are options for the metadata command
+// Meta are options for the metadata command
 type Meta struct {
 	Dir    string `ini:"dir"`
 	File   string `ini:"file"`
@@ -78,13 +80,13 @@ type Meta struct {
 	AsJSON bool   `ini:"json"`
 }
 
-//Template are options to generate the template output
+// Template are options to generate the template output
 type Template struct {
 	Dir  string `ini:"dir"`
 	File string `ini:"file"`
 }
 
-//Load returns configuration object from `.envsetrc` file
+// Load returns configuration object from `.envsetrc` file
 func Load(name string) (*Config, error) {
 	var err error
 	var cfg *ini.File
@@ -127,8 +129,8 @@ func Load(name string) (*Config, error) {
 	return c, nil
 }
 
-//MergeIgnored will merge ignored values from flags
-//with values from envsetrc for a given section
+// MergeIgnored will merge ignored values from flags
+// with values from envsetrc for a given section
 func (c *Config) MergeIgnored(section string, ignored []string) []string {
 	if i := c.Ignored[section]; len(i) == 0 {
 		return ignored
@@ -138,8 +140,8 @@ func (c *Config) MergeIgnored(section string, ignored []string) []string {
 	return out
 }
 
-//MergeRequired will merge ignored values from flags
-//with values from envsetrc for a given section
+// MergeRequired will merge ignored values from flags
+// with values from envsetrc for a given section
 func (c *Config) MergeRequired(section string, required []string) []string {
 	if i := c.Required[section]; len(i) == 0 {
 		return required
@@ -149,7 +151,7 @@ func (c *Config) MergeRequired(section string, required []string) []string {
 	return out
 }
 
-//Get will return the value of the given key
+// Get will return the value of the given key
 func (c *Config) Get(key string) string {
 	switch key {
 	case "filename":
@@ -194,7 +196,7 @@ func printList(a []string) string {
 	return o
 }
 
-//ListKeys returns the list of config keys
+// ListKeys returns the list of config keys
 func (c *Config) ListKeys() []string {
 	return []string{
 		"filename",
@@ -209,8 +211,18 @@ func (c *Config) ListKeys() []string {
 	}
 }
 
-//GetDefaultConfig returns the default
-//config string
+// RestartForEnv will return the restart value based on the env
+func (c *Config) RestartForEnv(env string) bool {
+	for _, exc := range c.ExcludeFromRestart {
+		if exc == env {
+			return false
+		}
+	}
+	return c.Restart
+}
+
+// GetDefaultConfig returns the default
+// config string
 func GetDefaultConfig() string {
 	return string(config)
 }
