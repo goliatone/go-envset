@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 
 	"gopkg.in/ini.v1"
 )
@@ -31,38 +33,83 @@ type RunOptions struct {
 	MaxRestarts         int
 }
 
+type runOutput struct {
+	completed bool
+	reload    bool
+	err       error
+}
+
+func (r runOutput) tryRestart() bool {
+	return r.reload || (r.completed && r.err != nil)
+}
+
 var runs = 1
+var command *exec.Cmd
 
 //Run will run the given command after loading the environment
 func Run(environment string, options RunOptions) error {
-	err := doRun(environment, options)
-	if err != nil {
+	ch := make(chan runOutput)
+	defer close(ch)
+
+	rl := make(chan os.Signal, 1)
+	signal.Notify(rl, syscall.SIGUSR2)
+	defer close(rl)
+
+	go doRun(environment, options, ch)
+
+	var res runOutput
+
+	select {
+	case res = <-ch:
+		// Run is done...
+		// Current implementation means that if we had
+		// an restart due to error then we are also
+		// reloading the env.
+	case <-rl:
+		// command.Process.Signal(syscall.SIGUSR2)
+		command.Process.Kill()
+		res = runOutput{
+			reload: true,
+		}
+	}
+
+	if res.tryRestart() {
 		if options.Restart {
 			if runs < options.MaxRestarts {
-				runs = runs + 1 //if we restart for ever this will grow
+				runs = runs + 1
 				return Run(environment, options)
 			}
 		}
-		return err
+		return res.err
 	}
-	return nil
+
+	return res.err
 }
 
-func doRun(environment string, options RunOptions) error {
+func doRun(environment string, options RunOptions, ch chan runOutput) {
 	env, err := getEnvFile(options)
 	if err != nil {
-		return err
+		ch <- runOutput{
+			err: err,
+		}
+		return
 	}
 
 	context, err := getContext(environment, env, options)
 	if err != nil {
-		return err
+		ch <- runOutput{
+			err: err,
+		}
+		return
 	}
 
 	//Replace ${VAR} and $(command) in values
 	err = context.Expand(options.Expand)
 	if err != nil {
-		return fmt.Errorf("context expand: %w", err)
+		ch <- runOutput{
+			err: fmt.Errorf("context expand: %w", err),
+		}
+		return
 	}
 
 	//Once we have resolved all ${VAR}/$(command) we build cmd.Env value
@@ -77,10 +124,13 @@ func doRun(environment string, options RunOptions) error {
 	//If we want to check for required variables do it now.
 	missing := context.GetMissingKeys(options.Required)
 	if len(missing) > 0 {
-		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
+		ch <- runOutput{
+			err: fmt.Errorf("missing required keys: %s", strings.Join(missing, ",")),
+		}
+		return
 	}
 
-	command := exec.Command(options.Cmd, options.Args...)
+	command = exec.Command(options.Cmd, options.Args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
@@ -90,22 +140,25 @@ func doRun(environment string, options RunOptions) error {
 		command.Env = vars
 		//add value for any inherited env vars we have in options
 		for _, k := range options.Inherit {
-			if v := os.Getenv(k); v != "" {
+			if v, ok := os.LookupEnv(k); !ok {
 				command.Env = append(command.Env, fmt.Sprintf("%s=%s", k, v))
 			}
 		}
 	} else {
 		local := LocalEnv()
 		for k, v := range context {
-			//TODO: what do we get if we have unset variables
 			if _, ok := local[k]; !ok {
 				os.Setenv(k, v)
 			}
 		}
 	}
-	//We want to Start and watch for errors. If it crashes we
-	//might want to restart.
-	return command.Run()
+
+	err = command.Run()
+
+	ch <- runOutput{
+		err:       err,
+		completed: true,
+	}
 }
 
 //Print will show the current environment
