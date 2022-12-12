@@ -66,7 +66,6 @@ func Run(environment string, options RunOptions) error {
 		// an restart due to error then we are also
 		// reloading the env.
 	case <-rl:
-		// command.Process.Signal(syscall.SIGUSR2)
 		command.Process.Kill()
 		res = runOutput{
 			reload: true,
