@@ -55,15 +55,15 @@ Environment variables enable us to manage application configuration outside of o
 
 Application configuration usually are small and sensitive data such as API keys or tokens, database credentials, etc. However not all environment configuration have to be secrets, there might be build distribution specific values such as the application's base URL to build OAuth callbacks, a dependent service endpoint or anything that changes between development and production environments.
 
-`envset` helps you manage environment variables for multiple build distributions.
+`envset` helps you manage environment variables for multiple build environments.
 
-Is as simple as calling:
+The following command will run a Node.js application with a `development` environment:
 
 ```console
 $ envset development -- node server.js
 ```
 
-This will load the variables defined in the `[development]` section of a local `.envset` in the shell environment and execute the command after the `--`, in this instance `node server.js`.
+`envset` will load the variables defined in the `[development]` section of a local `.envset` file and execute the command after the `--`.
 
 See the [examples](#examples) section for more details.
 
