@@ -5,36 +5,36 @@
 ---
 
 <!-- vscode-markdown-toc -->
-* [Environment level configuration](#Environmentlevelconfiguration)
-* [Similar Tools](#SimilarTools)
-* [Examples](#Examples)
-	* [Executing A Command](#ExecutingACommand)
-		* [Restart Command](#RestartCommand)
-		* [Variable Substitution](#VariableSubstitution)
-		* [Inherit Environment](#InheritEnvironment)
-		* [Overwriting Variables At Runtime](#OverwritingVariablesAtRuntime)
-		* [Load Env File To Current Shell Session](#LoadEnvFileToCurrentShellSession)
-		* [Required Environment Variables](#RequiredEnvironmentVariables)
-	* [Generating An Example Template](#GeneratingAnExampleTemplate)
-	* [Support For .env Files](#SupportFor.envFiles)
-	* [Metadata](#Metadata)
-	* [Metadata Compare](#MetadataCompare)
-		* [Ignore Variables](#IgnoreVariables)
-* [Installation](#Installation)
-	* [macOS](#macOS)
-	* [Ubuntu/Debian x86_64 - amd64](#UbuntuDebianx86_64-amd64)
-	* [CentOS/Redhat x86_64 - amd64](#CentOSRedhatx86_64-amd64)
-	* [Manual Install x86_64 - amd64](#ManualInstallx86_64-amd64)
-* [Documentation](#Documentation)
-	* [Commands](#Commands)
-	* [Variable Expansion](#VariableExpansion)
-	* [Commands](#Commands-1)
-* [.envset File](#envsetFile)
+* [Environment level configuration](#environment-level-configuration)
+* [Similar Tools](#similar-tools)
+* [Examples](#examples)
+	* [Executing A Command](#executing-a-command)
+		* [Restart Command](#restart-command)
+		* [Variable Substitution](#variable-substitution)
+		* [Inherit Environment](#inherit-environment)
+		* [Overwriting Variables At Runtime](#overwriting-variables-at-runtime)
+		* [Load Env File To Current Shell Session](#load-env-file-to-current-shell-session)
+		* [Required Environment Variables](#required-environment-variables)
+	* [Generating An Example Template](#generating-an-example-template)
+	* [Support For .env Files](#support-for-envfiles)
+	* [Metadata](#metadata)
+	* [Metadata Compare](#metadata-compara)
+		* [Ignore Variables](#ignore-variables)
+* [Installation](#installation)
+	* [macOS](#macos)
+	* [Ubuntu/Debian x86_64 - amd64](#ubuntu-debianx86-64-amd64)
+	* [CentOS/Redhat x86_64 - amd64](#centos-redhat-x86-64-amd64)
+	* [Manual Install x86_64 - amd64](#manual-install-x86-64-amd64)
+* [Documentation](#documentation)
+	* [Commands](#commands)
+	* [Variable Expansion](#variable-expansion)
+	* [Commands](#commands-1)
+* [.envset File](#envset-file)
 * [.envsetrc](#envsetrc)
-	* [Configuration](#Configuration)
-	* [Configuration Syntax](#ConfigurationSyntax)
-	* [Ignored And Required Sections](#IgnoredAndRequiredSections)
-* [License](#License)
+	* [Configuration](#configuration)
+	* [Configuration Syntax](#configuration-syntax)
+	* [Ignored And Required Sections](#ignored-and-required-sections)
+* [License](#license)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -45,7 +45,7 @@
 
 ---
 
-## <a name='Environmentlevelconfiguration'></a>Environment level configuration
+## <a name='environment-level-configuration'></a>Environment level configuration
 
 Application configuration is (usually) specific to an environment and will change between different build environments- e.g. app secrets for a staging environment are different than your production secrets.
 
@@ -67,7 +67,7 @@ $ envset development -- node server.js
 
 See the [examples](#examples) section for more details.
 
-## <a name='SimilarTools'></a>Similar Tools
+## <a name='similar-tools'></a>Similar Tools
 
 Inspired by [daemontools][dtools]' tool [envdir][envdir] and tools such as [dotenv](https://github.com/bkeepers/dotenv).
 
@@ -85,9 +85,9 @@ Instead of having an `.env` file per environment you can have one single `.envse
 
 <a name="node-dotenv">1</a>: You an actually require the library outside of your project with the `node -r` flag.
 
-## <a name='Examples'></a>Examples
+## <a name='examples'></a>Examples
 
-### <a name='ExecutingACommand'></a>Executing A Command
+### <a name='executing-a-command'></a>Executing A Command
 
 An **.envset** file could look like this:
 
@@ -107,7 +107,7 @@ To use it, simply prefix the call to your program with `envset` and the name of 
 $ envset development -- node app.js
 ```
 
-#### <a name='RestartCommand'></a>Restart Command
+#### <a name='restart-command'></a>Restart Command
 
 `envset` will optionally restart your command if it exits with an error code.
 There are three flags you can use to manage the restart behavior:
@@ -123,7 +123,7 @@ This will restart the node app for a maximum of `--max-restarts`.
 $ envset development --restart --max-restarts 10 -- node app.js
 ```
 
-#### <a name='VariableSubstitution'></a>Variable Substitution
+#### <a name='variable-substitution'></a>Variable Substitution
 
 You can execute commands that use environment variables in the command arguments.
 
@@ -134,7 +134,7 @@ $ envset development -- say '${APP_ENV}'
 $ envset development -- say \${APP_ENV}
 ```
 
-#### <a name='InheritEnvironment'></a>Inherit Environment
+#### <a name='inherit-environment'></a>Inherit Environment
 
 Sometimes the command you want to run will assume that has access to predefined environment variables:
 
@@ -171,7 +171,7 @@ You will get an error saying that `$GOPATH` is not available. The `--inherit` fl
 $ envset development -I=GOPATH -I=HOME -- go run cmd/app/server.go
 ```
 
-#### <a name='OverwritingVariablesAtRuntime'></a>Overwriting Variables At Runtime
+#### <a name='overwriting-variables-at-runtime'></a>Overwriting Variables At Runtime
 
 You can overwrite environment variables without editing your `.envset` file.
 
@@ -179,7 +179,7 @@ You can overwrite environment variables without editing your `.envset` file.
 APP_NAME="New Name" envset development --isolated=false -- spd-say '${APP_NAME}'
 ```
 
-#### <a name='LoadEnvFileToCurrentShellSession'></a>Load Env File To Current Shell Session
+#### <a name='load-env-file-to-current-shell-session'></a>Load Env File To Current Shell Session
 
 If you want to make the variables defined in a env file to your running shell session use something like the following snippet.
 
@@ -188,7 +188,7 @@ If you want to make the variables defined in a env file to your running shell se
 $ eval $(envset development)
 ```
 
-#### <a name='RequiredEnvironmentVariables'></a>Required Environment Variables
+#### <a name='required-environment-variables'></a>Required Environment Variables
 
 You can specify a list of required environment variables for your command using the `--required` flag or its `-R` alias.
 
@@ -212,7 +212,7 @@ $ envset development --required=BOOM -R BOOM2 -- node index.js
 missing required keys: BOOM,BOOM2
 ```
 
-### <a name='GeneratingAnExampleTemplate'></a>Generating An Example Template
+### <a name='generating-an-example-template'></a>Generating An Example Template
 
 If we run the `envset template` command with the previous **.envset** file we generate a **envset.example** file:
 
@@ -227,7 +227,7 @@ APP_REMOTE_SERVICE_KEY={{APP_REMOTE_SERVICE_KEY}}
 ```
 
 
-### <a name='SupportFor.envFiles'></a>Support For .env Files
+### <a name='support-for-envfiles'></a>Support For .env Files
 
 You can load other environment files like `.env` files:
 
@@ -235,11 +235,11 @@ You can load other environment files like `.env` files:
 $ envset --env-file=.env -- node index.js
 ```
 
-### <a name='Metadata'></a>Metadata
+### <a name='metadata'></a>Metadata
 
 The `metadata` command will generate a JSON file capturing the values of the provided env file.
 
-### <a name='MetadataCompare'></a>Metadata Compare
+### <a name='metadata-compara'></a>Metadata Compare
 
 Note that `envset metadata compare` will output to **stderr** in the case that both files do not match.
 
@@ -296,7 +296,7 @@ $ envset metadata compare --json -s development .meta/data.json .meta/prod.json
 }
 ```
 
-#### <a name='IgnoreVariables'></a>Ignore Variables
+#### <a name='ignore-variables'></a>Ignore Variables
 
 When comparing metadata files you can optionally ignore some variables that you know will be different or will be missing. You can do pass `--ignore` or `-I` flag with the variable name:
 
@@ -304,9 +304,9 @@ When comparing metadata files you can optionally ignore some variables that you 
 $ envset metadata compare --section=development -I IGNORED_VAR .meta/prod.data.json
 ```
 
-## <a name='Installation'></a>Installation
+## <a name='installation'></a>Installation
 
-### <a name='macOS'></a>macOS
+### <a name='macos'></a>macOS
 <!--
 TODO: List how to install in all different platforms
 -->
@@ -324,7 +324,7 @@ $ brew install envset
 ```
 
 
-### <a name='UbuntuDebianx86_64-amd64'></a>Ubuntu/Debian x86_64 - amd64
+### <a name='ubuntu-debianx86-64-amd64'></a>Ubuntu/Debian x86_64 - amd64
 
 ```console
 $ export tag=<version>
@@ -333,13 +333,13 @@ $ wget https://github.com/goliatone/go-envset/releases/download/v${tag}/envset_$
 $ sudo dpkg -i envset_${tag}_linux_x86_64.deb
 ```
 
-### <a name='CentOSRedhatx86_64-amd64'></a>CentOS/Redhat x86_64 - amd64
+### <a name='centos-redhat-x86-64-amd64'></a>CentOS/Redhat x86_64 - amd64
 
 ```console
 $ yum localinstall https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.rpm
 ```
 
-### <a name='ManualInstallx86_64-amd64'></a>Manual Install x86_64 - amd64
+### <a name='manual-install-x86-64-amd64'></a>Manual Install x86_64 - amd64
 
 ```console
 $ wget https://github.com/goliatone/go-envset/releases/download/v<version>/envset_<version>_linux_x86_64.tar.gz
@@ -347,7 +347,7 @@ $ tar -C /usr/bin/ -xzvf envset_<version>_linux_x86_64.tar.gz envset
 $ chmod +x /usr/bin/envset
 ```
 
-## <a name='Documentation'></a>Documentation
+## <a name='documentation'></a>Documentation
 
 `envset` will look for a file defining different environments and make them available as commands.
 
@@ -404,7 +404,7 @@ $ envset development -- node cli.js --user '${USER}'
 
 If you type `envset` without arguments it will display help and a list of supported environment names.
 
-## <a name='envsetFile'></a>.envset File
+## <a name='envset-file'></a>.envset File
 
 
 ## <a name='envsetrc'></a>.envsetrc
@@ -475,8 +475,8 @@ development=MY_REQUIRED_APP_NAME
 staging=MY_REQUIRED_VAR_STAGING
 ```
 
-## <a name='License'></a>License
-Copyright (c) 2015-2022 goliatone
+## <a name='license'></a>License
+Copyright (c) 2015 goliatone
 Licensed under the MIT license.
 
 
