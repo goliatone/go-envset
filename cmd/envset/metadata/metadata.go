@@ -145,11 +145,16 @@ func GetCommand(cnf *config.Config) *cli.Command {
 		},
 		Subcommands: []*cli.Command{
 			{
-				Name:        "compare",
-				Usage:       "compare two metadata files",
-				UsageText:   "envset metadata compare --section=[section] [source] [target]",
-				Description: "compares the provided section of two metadata files",
-				Category:    "METADATA",
+				Name:  "compare",
+				Usage: "compare two metadata files",
+				UsageText: `envset metadata compare --section=[section] [target]
+   envset metadata compare --section=[section] [source] [target]
+
+EXAMPLE:
+   envset metadata compare --section=development .meta/data.json .meta/prod.data.json`,
+				Description: `compares the provided [section] of two metadata files
+   [source] by default is .meta/data.json`,
+				Category: "METADATA",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "section",
@@ -194,12 +199,20 @@ func GetCommand(cnf *config.Config) *cli.Command {
 						target = c.Args().Get(1)
 					}
 
+					if msg := validateMetadataArgs(source, target); msg != "" {
+						return cli.Exit(msg, 1)
+					}
+
 					src := envset.EnvFile{}
 					src.FromJSON(source)
 
 					s1, err := src.GetSection(name)
 					if err != nil {
-						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in source metadata file:\n%s", name, source), 1)
+						fmt.Printf("source: %s\ntarget: %s\nerror: %s\n", source, target, err.Error())
+						return cli.Exit(
+							fmt.Sprintf("Section \"%s\" not found in source metadata file:\n%s", name, source),
+							1,
+						)
 					}
 
 					tgt := envset.EnvFile{}
@@ -371,4 +384,24 @@ func exists(path string) bool {
 func isMissingRemoteURL(err error) bool {
 	msg := err.Error()
 	return msg == "the key remote.origin.url is not found"
+}
+
+func validateMetadataArgs(source, target string) string {
+	if source == "" {
+		return fmt.Sprintf("Source path \"%s\" is not a valid file", source)
+	}
+
+	if target == "" {
+		return fmt.Sprintf("Source path \"%s\" is not a valid file", source)
+	}
+
+	if !exists(source) {
+		return fmt.Sprintf("Source path \"%s\" is not a valid file", source)
+	}
+
+	if !exists(target) {
+		return fmt.Sprintf("Target path \"%s\" is not a valid file", target)
+	}
+
+	return ""
 }
