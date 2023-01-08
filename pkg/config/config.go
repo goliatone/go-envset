@@ -52,6 +52,7 @@ type Config struct {
 	Expand              bool                 `ini:"expand"`
 	Isolated            bool                 `ini:"isolated"`
 	ExportEnvName       string               `ini:"export_environment"`
+	ExportEnvNameOld    string               `ini:"exportEnvironment"`
 	Meta                *Meta                `ini:"metadata"`
 	Template            *Template            `ini:"template"`
 	Ignored             map[string][]string
@@ -108,6 +109,10 @@ func Load(name string) (*Config, error) {
 	err = cfg.MapTo(c)
 	if err != nil {
 		return &Config{}, err
+	}
+
+	if c.ExportEnvNameOld != "" {
+		c.ExportEnvName = c.ExportEnvNameOld
 	}
 
 	if sec, err := cfg.GetSection("ignored"); err == nil {
