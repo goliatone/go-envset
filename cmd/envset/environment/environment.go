@@ -22,7 +22,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 		Usage:       fmt.Sprintf("load \"%s\" environment in current shell session", env),
 		UsageText:   fmt.Sprintf("envset %s [options] -- [command] [arguments...]", env),
 		Description: "This will load the environment and execute the provided command",
-		Category:    "ENVIRONMENTS",
+		Category:    "environments",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "isolated",
