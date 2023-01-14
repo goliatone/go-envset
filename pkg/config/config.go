@@ -253,10 +253,10 @@ func newConfig() *Config {
 	}
 	c.Environments = &Environments{
 		Names: []string{
-			"test",
+			"development",
 			"staging",
 			"production",
-			"development",
+			"test",
 		},
 	}
 	return c
