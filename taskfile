@@ -64,13 +64,16 @@ function wrk:dev {
 function build {
     lgr I "running build..."
 
-    VERSION=$(version:upsert $1)
-    BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
     RELBIN="./bin/darwin"
+
+    VERSION=$(version:get)
+    BUILD_DATE=$(date -u +%FT%TZ)
+    BUILD_COMMIT=$(git rev-parse HEAD)
+    BUILD_USER=$(id -u -n)
 
     mkdir -p ${RELBIN}
 
-    LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
+    LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=${BUILD_USER}' -X '${PROJECT}/pkg/version.Commit=${BUILD_COMMIT}'"
 
     lgr exec -- go build -ldflags "${LDFLAGS}" -o "${RELBIN}/${BINNAME}" "${ENTRYPOINT}"
 }
@@ -252,9 +255,14 @@ function version:bump {
 ## Get version from meta file.
 function ci:build {
     VERSION=$(version:get)
-    BUILD_DATE=$(date -u +%Y%m%d.%H%M%S)
 
-    LDFLAGS="-X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=$(id -u -n)'"
+    BUILD_DATE=$(date -u +%FT%TZ)
+    BUILD_COMMIT=$(git rev-parse HEAD)
+    BUILD_USER=$(id -u -n)
+
+    mkdir -p ${RELBIN}
+
+    LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=${BUILD_USER}' -X '${PROJECT}/pkg/version.Commit=${BUILD_COMMIT}'"
 
     echo "building version: ${VERSION}"
     echo "go build -ldflags ${LDFLAGS}"
