@@ -2,6 +2,7 @@ package envset
 
 import (
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -91,13 +92,88 @@ func Test_GetMissingKeys(t *testing.T) {
 	}
 
 	missing := result.GetMissingKeys([]string{"TEST_KEY_1", "TEST_KEY_2", "TEST_KEY_3"})
-	if missing[0] != "" {
+	if len(missing) != 0 {
 		t.Errorf("Missing keys should be 0: %v", missing)
 	}
 
 	missing = result.GetMissingKeys([]string{"MISSING_KEY"})
-	if missing[0] != "MISSING_KEY" {
-		t.Error("Missing keys should be 1")
+	if !reflect.DeepEqual(missing, []string{"MISSING_KEY"}) {
+		t.Errorf("Missing keys should be [MISSING_KEY]: %v", missing)
+	}
+
+	missing = result.GetMissingKeys([]string{"TEST_KEY_1", "MISSING_KEY", "TEST_KEY_2"})
+	if !reflect.DeepEqual(missing, []string{"MISSING_KEY"}) {
+		t.Errorf("Missing keys should not include blank entries: %v", missing)
+	}
+}
+
+func Test_GetMissingKeys_EmptyValue(t *testing.T) {
+	env := EnvMap{
+		"EMPTY_KEY": "",
+	}
+
+	missing := env.GetMissingKeys([]string{"EMPTY_KEY"})
+	if !reflect.DeepEqual(missing, []string{"EMPTY_KEY"}) {
+		t.Errorf("empty value should count as missing: %v", missing)
+	}
+}
+
+func Test_Expand_CommandSubstitution(t *testing.T) {
+	env := EnvMap{
+		"JOINED":   "$(printf a)$(printf b)",
+		"QUOTED":   "$(printf \"a b\")",
+		"PIPE":     "$(printf abc | tr a-z A-Z)",
+		"FROM_ENV": "$(printf \"$BASE-suffix\")",
+		"BASE":     "prefix",
+	}
+
+	if err := env.Expand(false); err != nil {
+		t.Fatalf("expand: %v", err)
+	}
+
+	tests := map[string]string{
+		"JOINED":   "ab",
+		"QUOTED":   "a b",
+		"PIPE":     "ABC",
+		"FROM_ENV": "prefix-suffix",
+	}
+	for key, want := range tests {
+		if env[key] != want {
+			t.Fatalf("%s = %q, want %q", key, env[key], want)
+		}
+	}
+}
+
+func Test_Expand_CommandSubstitutionFailure(t *testing.T) {
+	env := EnvMap{
+		"FAILS": "$(exit 7)",
+	}
+
+	if err := env.Expand(false); err == nil {
+		t.Fatal("expected command substitution failure")
+	}
+}
+
+func Test_EnvSliceAdd(t *testing.T) {
+	env := EnvSlice{}
+
+	env.Add("KEY", "value")
+
+	if !reflect.DeepEqual(env, EnvSlice{"KEY=value"}) {
+		t.Fatalf("env = %v, want [KEY=value]", env)
+	}
+}
+
+func Test_InterpolateKVStringsPreservesBareShellVars(t *testing.T) {
+	args := []string{"sh", "-c", "printf \"$A\""}
+
+	got, err := interpolateKVStrings(args, EnvMap{"A": "envset_value"}, true)
+	if err != nil {
+		t.Fatalf("interpolate args: %v", err)
+	}
+
+	if got[2] != "printf \"$A\"" {
+		t.Fatalf("arg = %q, want bare shell variable preserved", got[2])
 	}
 }
 
