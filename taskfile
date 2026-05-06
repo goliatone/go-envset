@@ -555,7 +555,7 @@ function build {
     BUILD_COMMIT=$(git rev-parse HEAD)
     BUILD_USER=$(id -u -n)
 
-    mkdir -p ${RELBIN}
+    mkdir -p "${RELBIN}"
 
     LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=${BUILD_USER}' -X '${PROJECT}/pkg/version.Commit=${BUILD_COMMIT}'"
 
@@ -738,20 +738,22 @@ function version:bump {
 ##
 ## Get version from meta file.
 function ci:build {
+    local output_dir="./bin"
+
     VERSION=$(version:get)
 
     BUILD_DATE=$(date -u +%FT%TZ)
     BUILD_COMMIT=$(git rev-parse HEAD)
     BUILD_USER=$(id -u -n)
 
-    mkdir -p ${RELBIN}
+    mkdir -p "${output_dir}"
 
     LDFLAGS="-s -w -X '${PROJECT}/pkg/version.Tag=${VERSION}' -X '${PROJECT}/pkg/version.Time=${BUILD_DATE}' -X '${PROJECT}/pkg/version.User=${BUILD_USER}' -X '${PROJECT}/pkg/version.Commit=${BUILD_COMMIT}'"
 
     echo "building version: ${VERSION}"
     echo "go build -ldflags ${LDFLAGS}"
 
-    go build -ldflags "${LDFLAGS}" -o "${BINPATH}/${BINNAME}" "${ENTRYPOINT}"
+    go build -ldflags "${LDFLAGS}" -o "${output_dir}/${BINNAME}" "${ENTRYPOINT}"
 }
 
 ##
@@ -773,7 +775,7 @@ function ci:test {
 ##
 ## Get version from meta file.
 function ci:clean {
-    rm -f "${BINPATH}/${BINNAME}" || true
+    rm -f "./bin/${BINNAME}" || true
 }
 
 
