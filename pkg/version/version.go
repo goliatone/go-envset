@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 )
 
-//TODO: This package should be build rather han version, so we can Tag -> Version
+// TODO: This package should be build rather han version, so we can Tag -> Version
 var (
 	Tag    = "dev"
 	Time   string
@@ -14,12 +14,12 @@ var (
 	Commit string
 )
 
-//GetVersion returns version string
+// GetVersion returns version string
 func GetVersion() string {
 	return Tag + "-" + Time + ":" + User
 }
 
-//Print will output our version in a format
+// Print will output our version in a format
 func Print(w io.Writer) error {
 	tw := new(tabwriter.Writer)
 	tw.Init(w, 0, 0, 0, ' ', tabwriter.AlignRight)
