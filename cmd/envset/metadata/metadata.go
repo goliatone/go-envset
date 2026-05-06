@@ -64,7 +64,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			shouldClean := false
 			if ok := exists(dir); !ok {
 				shouldClean = true
-				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+				if err = os.MkdirAll(dir, 0755); err != nil {
 					return err
 				}
 			}
@@ -129,13 +129,11 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			}
 
 			if !envExists {
-				err := os.WriteFile(o.Filepath, []byte(str), 0777)
-				if err != nil {
+				if err := writeMetadataFile(o.Filepath, str); err != nil {
 					return fmt.Errorf("write file %s: %w", o.Filepath, err)
 				}
 			} else if o.Overwrite {
-				err := os.WriteFile(o.Filepath, []byte(str), 0777)
-				if err != nil {
+				if err := writeMetadataFile(o.Filepath, str); err != nil {
 					return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
 				}
 			}
@@ -203,7 +201,9 @@ EXAMPLE:
 					}
 
 					src := envset.EnvFile{}
-					src.FromJSON(source)
+					if err := src.FromJSON(source); err != nil {
+						return cli.Exit(fmt.Sprintf("Unable to load source metadata file %q: %s", source, err), 1)
+					}
 
 					s1, err := src.GetSection(name)
 					if err != nil {
@@ -215,7 +215,9 @@ EXAMPLE:
 					}
 
 					tgt := envset.EnvFile{}
-					tgt.FromJSON(target)
+					if err := tgt.FromJSON(target); err != nil {
+						return cli.Exit(fmt.Sprintf("Unable to load target metadata file %q: %s", target, err), 1)
+					}
 					s2, err := tgt.GetSection(name)
 
 					if err != nil {
@@ -383,6 +385,13 @@ func exists(path string) bool {
 func isMissingRemoteURL(err error) bool {
 	msg := err.Error()
 	return msg == "the key remote.origin.url is not found"
+}
+
+func writeMetadataFile(path, contents string) error {
+	if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
+		return err
+	}
+	return os.Chmod(path, 0644)
 }
 
 func validateMetadataArgs(source, target string) string {
