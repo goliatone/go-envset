@@ -11,8 +11,8 @@ func (e envFileErrorNotFound) Error() string {
 	return e.msg
 }
 
-//IsFileNotFound will return true if v is file not found
-func IsFileNotFound(v interface{}) bool {
+// IsFileNotFound will return true if v is file not found
+func IsFileNotFound(v any) bool {
 	_, isType := v.(envFileErrorNotFound)
 	return isType
 }
@@ -26,8 +26,8 @@ func (e envSectionErrorNotFound) Error() string {
 	return e.msg
 }
 
-//IsSectionNotFound will return true if v is section not found
-func IsSectionNotFound(v interface{}) bool {
+// IsSectionNotFound will return true if v is section not found
+func IsSectionNotFound(v any) bool {
 	_, isType := v.(envSectionErrorNotFound)
 	return isType
 }
@@ -41,14 +41,14 @@ func (e ErrorRunningCommand) Error() string {
 	return e.msg
 }
 
-//IsErrorRunningCommand will return true if v is section not found
-func IsErrorRunningCommand(v interface{}) bool {
+// IsErrorRunningCommand will return true if v is section not found
+func IsErrorRunningCommand(v any) bool {
 	_, isType := v.(ErrorRunningCommand)
 	return isType
 }
 
-//ErrorWrongAlgorithm generated when source and target have different
-//algorithms
+// ErrorWrongAlgorithm generated when source and target have different
+// algorithms
 type ErrorWrongAlgorithm struct {
 	source string
 	target string
