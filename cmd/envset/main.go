@@ -23,7 +23,6 @@ import (
 )
 
 var app *cli.App
-var cnf *config.Config
 
 func init() {
 	cli.VersionFlag = &cli.BoolFlag{
@@ -140,7 +139,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 		//If we try to execute a command for an inexistent environment, e.g:
 		// envset ==> show help
 		//we just called: envset
-		if c.NArg() == 0 && c.NumFlags() == 0 {
+		if ecmd.Cmd == "" && c.NArg() == 0 && c.NumFlags() == 0 {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
@@ -149,10 +148,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 		required := c.StringSlice("required")
 		required = cnf.MergeRequired(env, required)
 
-		max := c.Int("max-restarts")
-		if c.Bool("forever") {
-			max = math.MaxInt
-		}
+		restart, max := restartOptions(c)
 
 		o := envset.RunOptions{
 			Cmd:                 ecmd.Cmd,
@@ -164,21 +160,22 @@ func run(args []string, ecmd exec.ExecCmd) {
 			Required:            required,
 			Inherit:             c.StringSlice("inherit"),
 			ExportEnvName:       c.String("export-env-name"),
-			Restart:             c.Bool("restart"),
+			Restart:             restart,
 			MaxRestarts:         max,
-		}
-
-		//Run if we have something like this:
-		// envset --env-file=.env -- node index.js
-		// envset --env-file=.envset --env=development -- node index.js
-		if ecmd.Cmd != "" && o.Filename != cnf.Filename {
-			return envset.Run(env, o)
 		}
 
 		// envset undefined ==> show error: environment undefined does not exist
 		// envset undefined -- node index.js ==> show error: environment undefined does not exist
 		if c.NArg() >= 1 && !c.Command.HasName(c.Args().First()) {
 			return cli.Exit(fmt.Sprintf("%s: not a valid environment name", c.Args().First()), 1)
+		}
+
+		//Run if we have something like this:
+		// envset --env-file=.env -- node index.js
+		// envset --env-file=.envset --env=development -- node index.js
+		// envset -- node index.js
+		if ecmd.Cmd != "" {
+			return envset.Run(env, o)
 		}
 
 		//we called something like:
@@ -194,4 +191,29 @@ func run(args []string, ecmd exec.ExecCmd) {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)
 	}
+}
+
+func restartOptions(c *cli.Context) (bool, int) {
+	restart := c.Bool("restart")
+	max := c.Int("max-restarts")
+
+	if !c.Bool("forever") {
+		return restart, max
+	}
+
+	if c.IsSet("restart") && !restart {
+		return false, max
+	}
+
+	if c.IsSet("forever") {
+		restart = true
+	}
+
+	if !restart {
+		return false, max
+	}
+
+	max = math.MaxInt
+
+	return restart, max
 }
