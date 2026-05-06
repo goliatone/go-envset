@@ -3,7 +3,6 @@ package metadata
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,8 +16,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-//GetCommand returns a new cli.Command for the
-//metadata command.
+// GetCommand returns a new cli.Command for the
+// metadata command.
 func GetCommand(cnf *config.Config) *cli.Command {
 
 	return &cli.Command{
@@ -130,12 +129,12 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			}
 
 			if !envExists {
-				err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+				err := os.WriteFile(o.Filepath, []byte(str), 0777)
 				if err != nil {
 					return fmt.Errorf("write file %s: %w", o.Filepath, err)
 				}
-			} else if o.Overwrite == true {
-				err := ioutil.WriteFile(o.Filepath, []byte(str), 0777)
+			} else if o.Overwrite {
+				err := os.WriteFile(o.Filepath, []byte(str), 0777)
 				if err != nil {
 					return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
 				}
@@ -226,7 +225,7 @@ EXAMPLE:
 					s3 := envset.CompareSections(*s1, *s2, ignored)
 					s3.Name = name
 
-					if s3.IsEmpty() == false {
+					if !s3.IsEmpty() {
 						if print && !json {
 							prettyPrint(s3, source, target, ignored)
 							return cli.Exit("", 1)
