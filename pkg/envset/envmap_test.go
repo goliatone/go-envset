@@ -83,6 +83,51 @@ TEST_KEY_3=value3
 
 func Test_Expand(t *testing.T) {}
 
+func Test_Expand_NestedVariablesDeterministic(t *testing.T) {
+	for range 100 {
+		env := EnvMap{
+			"A": "${B}",
+			"B": "${C}",
+			"C": "ok",
+		}
+
+		if err := env.Expand(false); err != nil {
+			t.Fatalf("expand: %v", err)
+		}
+
+		if env["A"] != "ok" {
+			t.Fatalf("A = %q, want ok", env["A"])
+		}
+	}
+}
+
+func Test_Expand_CommandSubstitutionSeesResolvedEnv(t *testing.T) {
+	env := EnvMap{
+		"COMMAND": "$(printf \"$VALUE\")",
+		"VALUE":   "${BASE}-suffix",
+		"BASE":    "prefix",
+	}
+
+	if err := env.Expand(false); err != nil {
+		t.Fatalf("expand: %v", err)
+	}
+
+	if env["COMMAND"] != "prefix-suffix" {
+		t.Fatalf("COMMAND = %q, want prefix-suffix", env["COMMAND"])
+	}
+}
+
+func Test_Expand_CyclicVariableReference(t *testing.T) {
+	env := EnvMap{
+		"A": "${B}",
+		"B": "${A}",
+	}
+
+	if err := env.Expand(false); err == nil {
+		t.Fatal("expected cycle error")
+	}
+}
+
 func Test_GetMissingKeys(t *testing.T) {
 	fixture := []byte("{\"TEST_KEY_1\": \"value1\", \"TEST_KEY_2\": \"value2\",\"TEST_KEY_3\": \"value3\"}")
 

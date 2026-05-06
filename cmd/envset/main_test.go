@@ -132,6 +132,8 @@ func Test_Metadata(t *testing.T) {
 
 	assert.DirExists(t, ".meta")
 	assert.FileExists(t, path.Join(".meta", "data.json"))
+	assertNotGroupOrWorldWritable(t, ".meta")
+	assertRegularFileMode(t, path.Join(".meta", "data.json"))
 
 	rm(".meta", t)
 	cd(dir, t)
@@ -268,6 +270,68 @@ func Test_MetadataOptions(t *testing.T) {
 	assert.FileExists(t, path.Join("testdata", "meta", "data.json"))
 
 	rm("testdata/meta", t)
+}
+
+func Test_MetadataCompareInvalidJSONReportsLoadError(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "source.json")
+	target := filepath.Join(dir, "target.json")
+
+	if err := os.WriteFile(source, []byte("{not-json"), 0644); err != nil {
+		t.Fatalf("write source: %v", err)
+	}
+	valid := `{"algorithm":"sha256","sections":[{"name":"development","values":[]}]}`
+	if err := os.WriteFile(target, []byte(valid), 0644); err != nil {
+		t.Fatalf("write target: %v", err)
+	}
+
+	testcli.Run(bin,
+		"metadata",
+		"compare",
+		"--section=development",
+		source,
+		target,
+	)
+
+	if testcli.Success() {
+		t.Fatal("Expected metadata compare to fail")
+	}
+	if !testcli.StdoutContains("Unable to load source metadata file") && !testcli.StderrContains("Unable to load source metadata file") {
+		t.Fatalf("Expected load error, stdout: %q stderr: %q", testcli.Stdout(), testcli.Stderr())
+	}
+}
+
+func Test_MetadataOverwriteTightensFilePermissions(t *testing.T) {
+	dir := t.TempDir()
+	envFile := filepath.Join(dir, ".envset")
+	metaDir := filepath.Join(dir, "meta")
+	metaFile := filepath.Join(metaDir, "data.json")
+
+	if err := os.WriteFile(envFile, []byte("[development]\nA=1\n"), 0644); err != nil {
+		t.Fatalf("write env file: %v", err)
+	}
+	if err := os.MkdirAll(metaDir, 0755); err != nil {
+		t.Fatalf("make meta dir: %v", err)
+	}
+	stale := `{"algorithm":"sha256","sections":[]}`
+	if err := os.WriteFile(metaFile, []byte(stale), 0777); err != nil {
+		t.Fatalf("write stale metadata: %v", err)
+	}
+	if err := os.Chmod(metaFile, 0777); err != nil {
+		t.Fatalf("chmod stale metadata: %v", err)
+	}
+
+	testcli.Run(bin,
+		"metadata",
+		"--env-file="+envFile,
+		"--filepath="+metaDir,
+		"--filename=data.json",
+	)
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, but failed: %q with message: %q", testcli.Error(), testcli.Stderr())
+	}
+	assertRegularFileMode(t, metaFile)
 }
 
 func Test_DotEnvFile(t *testing.T) {
@@ -431,4 +495,29 @@ func md5sum(filePath string, t *testing.T) string {
 		t.Fatalf("error removing dir: %q ", err)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func assertNotGroupOrWorldWritable(t *testing.T, filePath string) {
+	t.Helper()
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("stat %s: %v", filePath, err)
+	}
+	if info.Mode().Perm()&0022 != 0 {
+		t.Fatalf("%s mode = %v, want no group/world write bits", filePath, info.Mode().Perm())
+	}
+}
+
+func assertRegularFileMode(t *testing.T, filePath string) {
+	t.Helper()
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("stat %s: %v", filePath, err)
+	}
+	if info.Mode().Perm()&0111 != 0 {
+		t.Fatalf("%s mode = %v, want no executable bits", filePath, info.Mode().Perm())
+	}
+	assertNotGroupOrWorldWritable(t, filePath)
 }

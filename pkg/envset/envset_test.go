@@ -101,6 +101,39 @@ func Test_Run_UnsortedSectionNames(t *testing.T) {
 	}
 }
 
+func Test_Run_MaxRestartsCountsRestartsPerCall(t *testing.T) {
+	dir := t.TempDir()
+	envFile := filepath.Join(dir, ".envset")
+	if err := os.WriteFile(envFile, []byte("[development]\nA=1\n"), 0644); err != nil {
+		t.Fatalf("write env file: %v", err)
+	}
+
+	countFile := filepath.Join(dir, "runs")
+	options := RunOptions{
+		Filename:      envFile,
+		Cmd:           "sh",
+		Args:          []string{"-c", "printf x >> \"$1\"; exit 1", "sh", countFile},
+		Isolated:      true,
+		ExportEnvName: "APP_ENV",
+		Restart:       true,
+		MaxRestarts:   3,
+	}
+
+	if err := Run("development", options); err == nil {
+		t.Fatal("expected command failure")
+	}
+	assertFileSize(t, countFile, 4)
+
+	if err := os.Remove(countFile); err != nil {
+		t.Fatalf("remove count file: %v", err)
+	}
+
+	if err := Run("development", options); err == nil {
+		t.Fatal("expected command failure")
+	}
+	assertFileSize(t, countFile, 4)
+}
+
 func Test_EnvFileLoadPersistsState(t *testing.T) {
 	dir := t.TempDir()
 	envFile := filepath.Join(dir, ".envset")
@@ -170,6 +203,26 @@ func Test_CompareMetadataFiles(t *testing.T) {
 			wantChanged: true,
 		},
 		{
+			name: "project change changed",
+			source: metadataFixtureWithProject(HashSHA256, "new-project", map[string]string{
+				"development": "abc",
+			}),
+			target: metadataFixtureWithProject(HashSHA256, "old-project", map[string]string{
+				"development": "abc",
+			}),
+			wantChanged: true,
+		},
+		{
+			name: "filename change changed",
+			source: metadataFixtureWithFilename(HashSHA256, "new.envset", map[string]string{
+				"development": "abc",
+			}),
+			target: metadataFixtureWithFilename(HashSHA256, "old.envset", map[string]string{
+				"development": "abc",
+			}),
+			wantChanged: true,
+		},
+		{
 			name: "algorithm mismatch errors",
 			source: metadataFixture(HashMD5, map[string]string{
 				"development": "abc",
@@ -202,8 +255,19 @@ func Test_CompareMetadataFiles(t *testing.T) {
 }
 
 func metadataFixture(algorithm string, sections map[string]string) *EnvFile {
+	return metadataFixtureWithProject(algorithm, "", sections)
+}
+
+func metadataFixtureWithProject(algorithm, project string, sections map[string]string) *EnvFile {
+	envFile := metadataFixtureWithFilename(algorithm, ".envset", sections)
+	envFile.Project = project
+	return envFile
+}
+
+func metadataFixtureWithFilename(algorithm, filename string, sections map[string]string) *EnvFile {
 	envFile := &EnvFile{
 		Algorithm: algorithm,
+		Filename:  filename,
 		Sections:  make([]*EnvSection, 0, len(sections)),
 	}
 	for name, hash := range sections {
@@ -215,4 +279,16 @@ func metadataFixture(algorithm string, sections map[string]string) *EnvFile {
 		})
 	}
 	return envFile
+}
+
+func assertFileSize(t *testing.T, name string, want int64) {
+	t.Helper()
+
+	info, err := os.Stat(name)
+	if err != nil {
+		t.Fatalf("stat %s: %v", name, err)
+	}
+	if info.Size() != want {
+		t.Fatalf("size = %d, want %d", info.Size(), want)
+	}
 }
