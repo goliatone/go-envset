@@ -6,14 +6,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"gopkg.in/ini.v1"
 )
 
-// DefaultSection is the name of the default ini section
-const DefaultSection = ini.DEFAULT_SECTION
+// DefaultSection is the name of the default ini section.
+var DefaultSection = ini.DefaultSection
 
 // RunOptions is used to configure a run command
 type RunOptions struct {
@@ -72,7 +71,10 @@ func doRun(environment string, options RunOptions) error {
 	//note that if these are not in single quotes they will
 	//be resolved by the shell when we call envset and we will
 	//read the the result of that replacement, even if is empty.
-	InterpolateKVStrings(options.Args, context, options.Expand)
+	_, err = interpolateKVStrings(options.Args, context, options.Expand)
+	if err != nil {
+		return fmt.Errorf("interpolate command args: %w", err)
+	}
 
 	//If we want to check for required variables do it now.
 	missing := context.GetMissingKeys(options.Required)
@@ -129,7 +131,7 @@ func Print(environment string, options RunOptions) error {
 	}
 
 	//----- actual print action
-	if options.Isolated == false {
+	if !options.Isolated {
 		for _, e := range os.Environ() {
 			fmt.Println(e)
 		}
@@ -208,12 +210,7 @@ func getEnvFile(options RunOptions) (*ini.File, error) {
 }
 
 func getSec(environment string, env *ini.File, options RunOptions) (*ini.Section, error) {
-	// check to see if we have this section at all
 	names := env.SectionStrings()
-	if sort.SearchStrings(names, environment) == len(names) {
-		return nil, fmt.Errorf("section not defined in envsetrc")
-	}
-
 	sec, err := env.GetSection(environment)
 	if err != nil {
 		return nil, envSectionErrorNotFound{
