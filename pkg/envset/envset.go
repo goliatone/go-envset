@@ -30,21 +30,20 @@ type RunOptions struct {
 	MaxRestarts         int
 }
 
-var runs = 1
-
 // Run will run the given command after loading the environment
 func Run(environment string, options RunOptions) error {
-	err := doRun(environment, options)
-	if err != nil {
-		if options.Restart {
-			if runs < options.MaxRestarts {
-				runs = runs + 1 //if we restart for ever this will grow
-				return Run(environment, options)
-			}
+	restarts := 0
+	for {
+		err := doRun(environment, options)
+		if err == nil {
+			return nil
 		}
-		return err
+
+		if !options.Restart || restarts >= options.MaxRestarts {
+			return err
+		}
+		restarts++
 	}
-	return nil
 }
 
 func doRun(environment string, options RunOptions) error {
