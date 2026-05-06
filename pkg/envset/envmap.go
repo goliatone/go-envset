@@ -6,25 +6,24 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"text/template"
 
 	"gopkg.in/ini.v1"
 )
 
-//EnvSlice type to hold envset entries
+// EnvSlice type to hold envset entries
 type EnvSlice []string
 
-//EnvMap type to hold envset map
+// EnvMap type to hold envset map
 type EnvMap map[string]string
 
-//NewEnvMap returns a new EnvMap
+// NewEnvMap returns a new EnvMap
 func NewEnvMap() EnvMap {
 	return make(EnvMap)
 }
 
-//LocalEnv will return the local env
+// LocalEnv will return the local env
 func LocalEnv() EnvMap {
 	env := make(EnvMap)
 
@@ -39,7 +38,7 @@ func LocalEnv() EnvMap {
 	return env
 }
 
-//LoadJSON will load a json environment definition
+// LoadJSON will load a json environment definition
 func LoadJSON(b []byte) (EnvMap, error) {
 	env := make(EnvMap)
 	if err := json.Unmarshal(b, &env); err != nil {
@@ -48,7 +47,7 @@ func LoadJSON(b []byte) (EnvMap, error) {
 	return env, nil
 }
 
-//LoadIniSection returns a new EnvMap from a ini section
+// LoadIniSection returns a new EnvMap from a ini section
 func LoadIniSection(sec *ini.Section) EnvMap {
 	env := make(EnvMap)
 	for _, k := range sec.KeyStrings() {
@@ -57,17 +56,21 @@ func LoadIniSection(sec *ini.Section) EnvMap {
 	return env
 }
 
-//Expand ${VAR} and $(command) in values
+// Expand ${VAR} and $(command) in values
 func (e EnvMap) Expand(osExpand bool) error {
 	for k, v := range e {
-		res := interpolateVars(v, e)
-		res, err := interpolateCmds(res, e)
+		res, err := interpolateVars(v, e)
+		if err != nil {
+			return fmt.Errorf("interpolate vars: %w", err)
+		}
+
+		res, err = interpolateCmds(res, e)
 		if err != nil {
 			return ErrorRunningCommand{err, "error running command"}
 		}
 
 		//try using built in shell variables
-		if osExpand == true {
+		if osExpand {
 			res = os.ExpandEnv(res)
 		}
 
@@ -76,27 +79,27 @@ func (e EnvMap) Expand(osExpand bool) error {
 	return nil
 }
 
-//GetMissingKeys will compare the keys present in `keys` with the keys present in
-//the EnvMap instance and return a list of missing keys.
+// GetMissingKeys will compare the keys present in `keys` with the keys present in
+// the EnvMap instance and return a list of missing keys.
 func (e EnvMap) GetMissingKeys(keys []string) []string {
 
-	missing := make([]string, len(keys))
-	for i, k := range keys {
+	missing := make([]string, 0)
+	for _, k := range keys {
 		if v := e[k]; v == "" {
-			missing[i] = k
+			missing = append(missing, k)
 		}
 	}
 	return missing
 }
 
-//ToExpandedKVStrings returns an expanded list of key=value strings
+// ToExpandedKVStrings returns an expanded list of key=value strings
 func (e EnvMap) ToExpandedKVStrings(osExpand bool) []string {
 	vars := e.ToKVStrings()
 	InterpolateKVStrings(vars, e, osExpand)
 	return vars
 }
 
-//ToKVStrings will return an slice of `key=values`
+// ToKVStrings will return an slice of `key=values`
 func (e EnvMap) ToKVStrings() []string {
 
 	// vars := make([]string, 0)
@@ -113,99 +116,174 @@ func (e EnvMap) ToKVStrings() []string {
 	return env
 }
 
-//InterpolateKVStrings replace ${VAR} in the executable cmd arguments
+// InterpolateKVStrings replace ${VAR} in the executable cmd arguments
 func InterpolateKVStrings(args []string, context EnvMap, expand bool) []string {
-
-	for i, arg := range args {
-		//we use custom interpolation string for variables we load
-		args[i] = interpolateVars(arg, context)
-
-		//try using built in OS variables
-		if expand == true {
-			args[i] = os.ExpandEnv(args[i])
-		}
-	}
+	args, _ = interpolateKVStrings(args, context, expand)
 	return args
 }
 
-func interpolateCmds(str string, vars map[string]string) (string, error) {
-	//check if str has something that looks like a command $(.*+)
-	re, err := regexp.Compile(`\$\(.*\)`)
-	if err != nil {
-		return "", fmt.Errorf("regexp compile: %w", err)
+func interpolateKVStrings(args []string, context EnvMap, expand bool) ([]string, error) {
+	for i, arg := range args {
+		//we use custom interpolation string for variables we load
+		interpolated, err := interpolateVars(arg, context)
+		if err != nil {
+			return args, err
+		}
+		args[i] = interpolated
+
+		//try using built in OS variables
+		if expand {
+			args[i] = expandBracedEnv(args[i])
+		}
 	}
+	return args, nil
+}
 
-	matches := re.FindAllString(str, -1)
-
-	if len(matches) == 0 {
-		return str, nil
-	}
-
-	//execute command:
-	for _, match := range matches {
-		//Get the actual $(command)
-		command := strings.Replace(match, ")", "", -1)
-		command = strings.Replace(command, "$(", "", -1)
-
-		if len(command) == 0 {
+func expandBracedEnv(str string) string {
+	var out strings.Builder
+	for i := 0; i < len(str); {
+		if i+2 >= len(str) || str[i] != '$' || str[i+1] != '{' {
+			out.WriteByte(str[i])
+			i++
 			continue
 		}
 
-		//Some commands might have arguments: $(hostname -f)
-		args := strings.Split(command, " ")
-
-		res, err := exec.Command(args[0], args[1:]...).Output()
-		if err != nil {
-			return "", fmt.Errorf("exec command: %w", err)
+		end := strings.IndexByte(str[i+2:], '}')
+		if end == -1 {
+			out.WriteString(str[i:])
+			break
 		}
 
-		//replace $() with value
-		out := string(res)
-		out = strings.TrimSuffix(out, "\n")
-		re := regexp.MustCompile(regexp.QuoteMeta(match))
-		str = re.ReplaceAllString(str, out)
+		key := str[i+2 : i+2+end]
+		out.WriteString(os.Getenv(key))
+		i = i + 2 + end + 1
 	}
-
-	return str, nil
+	return out.String()
 }
 
-func interpolateVars(str string, vars map[string]string) string {
+func interpolateCmds(str string, vars map[string]string) (string, error) {
+	var out strings.Builder
+	for i := 0; i < len(str); {
+		if i+1 >= len(str) || str[i] != '$' || str[i+1] != '(' {
+			out.WriteByte(str[i])
+			i++
+			continue
+		}
+
+		command, end, err := scanCommandSubstitution(str, i)
+		if err != nil {
+			return "", err
+		}
+
+		if command == "" {
+			i = end
+			continue
+		}
+
+		res, err := runShellCommand(command, vars)
+		if err != nil {
+			return "", err
+		}
+
+		out.WriteString(strings.TrimSuffix(res, "\n"))
+		i = end
+	}
+
+	return out.String(), nil
+}
+
+func scanCommandSubstitution(str string, start int) (string, int, error) {
+	depth := 1
+	bodyStart := start + 2
+	quote := byte(0)
+	escaped := false
+
+	for i := bodyStart; i < len(str); i++ {
+		ch := str[i]
+
+		if escaped {
+			escaped = false
+			continue
+		}
+
+		if ch == '\\' {
+			escaped = true
+			continue
+		}
+
+		if quote != 0 {
+			if ch == quote {
+				quote = 0
+			}
+			continue
+		}
+
+		if ch == '\'' || ch == '"' {
+			quote = ch
+			continue
+		}
+
+		if ch == '$' && i+1 < len(str) && str[i+1] == '(' {
+			depth++
+			i++
+			continue
+		}
+
+		if ch == ')' {
+			depth--
+			if depth == 0 {
+				return str[bodyStart:i], i + 1, nil
+			}
+		}
+	}
+
+	return "", 0, fmt.Errorf("unterminated command substitution")
+}
+
+func runShellCommand(command string, vars map[string]string) (string, error) {
+	cmd := exec.Command("/bin/sh", "-c", command)
+	cmd.Env = os.Environ()
+	for k, v := range vars {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	res, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("exec command: %w", err)
+	}
+
+	return string(res), nil
+}
+
+func interpolateVars(str string, vars map[string]string) (string, error) {
 	s := strings.Replace(str, "${", "${.", -1)
 	t, err := template.New(str).Option("missingkey=error").Delims("${", "}").Parse(s)
 	if err != nil {
-		fmt.Printf("Error parsing command arguments: %+v", err)
-		os.Exit(1)
+		return "", fmt.Errorf("parse template: %w", err)
 	}
 
 	var buf bytes.Buffer
 	err = t.Execute(&buf, vars)
 	if err != nil {
-		//if strict we should exit
-		//else return str
-		if false {
-			fmt.Printf("Error parsing command arguments: %+v", err)
-			os.Exit(1)
-		} else {
-			return str
-		}
+		return str, nil
 	}
 
 	if buf.Len() == 0 {
-		return str
+		return str, nil
 	}
 
 	out := buf.String()
 
 	if out == "<no value>" {
-		return str
+		return str, nil
 	}
 
-	return out
+	return out, nil
 }
 
 /////
 
-func (e EnvSlice) Add(k, v string) {
+func (e *EnvSlice) Add(k, v string) {
 	val := fmt.Sprintf("%s=%s", k, v)
-	e = append(e, val)
+	*e = append(*e, val)
 }
