@@ -10,11 +10,11 @@ import (
 )
 
 func Test_LocalEnv(t *testing.T) {
-	defer unsetEnv("TEST_KEY_")()
+	defer unsetEnv(t, "TEST_KEY_")()
 
-	os.Setenv("TEST_KEY_1", "value1")
-	os.Setenv("TEST_KEY_2", "value2")
-	os.Setenv("TEST_KEY_3", "value3")
+	setEnv(t, "TEST_KEY_1", "value1")
+	setEnv(t, "TEST_KEY_2", "value2")
+	setEnv(t, "TEST_KEY_3", "value3")
 
 	result := LocalEnv()
 
@@ -245,7 +245,17 @@ func Test_ToKVStrings(t *testing.T) {
 	}
 }
 
-func unsetEnv(prefix string) (restore func()) {
+func setEnv(t *testing.T, key, value string) {
+	t.Helper()
+
+	if err := os.Setenv(key, value); err != nil {
+		t.Fatalf("set env %s: %v", key, err)
+	}
+}
+
+func unsetEnv(t *testing.T, prefix string) (restore func()) {
+	t.Helper()
+
 	before := map[string]string{}
 
 	for _, e := range os.Environ() {
@@ -254,7 +264,9 @@ func unsetEnv(prefix string) (restore func()) {
 		}
 		parts := strings.SplitN(e, "=", 2)
 		before[parts[0]] = parts[1]
-		os.Unsetenv(parts[0])
+		if err := os.Unsetenv(parts[0]); err != nil {
+			t.Fatalf("unset env %s: %v", parts[0], err)
+		}
 	}
 
 	return func() {
@@ -269,18 +281,20 @@ func unsetEnv(prefix string) (restore func()) {
 
 			v, ok := before[parts[0]]
 			if !ok {
-				os.Unsetenv(parts[0])
+				if err := os.Unsetenv(parts[0]); err != nil {
+					t.Fatalf("unset env %s: %v", parts[0], err)
+				}
 				continue
 			}
 			if parts[1] != v {
-				//If the env var has changed, set it back
-				os.Setenv(parts[0], v)
+				// If the env var has changed, set it back.
+				setEnv(t, parts[0], v)
 			}
 		}
 		for k, v := range before {
 			if _, ok := after[k]; !ok {
-				//add missing k
-				os.Setenv(k, v)
+				// Add missing k.
+				setEnv(t, k, v)
 			}
 		}
 	}

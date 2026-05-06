@@ -81,7 +81,7 @@ func doRun(environment string, options RunOptions) error {
 		return fmt.Errorf("missing required keys: %s", strings.Join(missing, ","))
 	}
 
-	command := exec.Command(options.Cmd, options.Args...)
+	command := exec.Command(options.Cmd, options.Args...) // #nosec G204 -- envset intentionally runs the user-provided command.
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
@@ -100,7 +100,9 @@ func doRun(environment string, options RunOptions) error {
 		for k, v := range context {
 			//TODO: what do we get if we have unset variables
 			if _, ok := local[k]; !ok {
-				os.Setenv(k, v)
+				if err := os.Setenv(k, v); err != nil {
+					return fmt.Errorf("set environment variable %s: %w", k, err)
+				}
 			}
 		}
 	}
@@ -237,7 +239,9 @@ func getSec(environment string, env *ini.File, options RunOptions) (*ini.Section
 	//Ensure we export the env name to the environment
 	//e.g. APP_ENV=development
 	if !sec.HasKey(options.ExportEnvName) {
-		sec.NewKey(options.ExportEnvName, environment)
+		if _, err := sec.NewKey(options.ExportEnvName, environment); err != nil {
+			return nil, fmt.Errorf("add environment key %s: %w", options.ExportEnvName, err)
+		}
 	}
 
 	return sec, nil

@@ -329,7 +329,7 @@ func scanCommandSubstitution(str string, start int) (string, int, error) {
 }
 
 func runShellCommand(command string, vars map[string]string) (string, error) {
-	cmd := exec.Command("/bin/sh", "-c", command)
+	cmd := exec.Command("/bin/sh", "-c", command) // #nosec G204 -- envset intentionally supports command substitution in env files.
 	cmd.Env = os.Environ()
 	for k, v := range vars {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))

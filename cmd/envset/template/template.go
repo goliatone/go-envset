@@ -37,7 +37,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			}
 
 			if _, err = os.Stat(dir); os.IsNotExist(err) {
-				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+				if err = os.MkdirAll(dir, 0750); err != nil {
 					return err
 				}
 			}

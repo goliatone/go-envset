@@ -74,7 +74,9 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 	}
 
 	if print {
-		tpl.WriteTo(os.Stdout)
+		if _, err := tpl.WriteTo(os.Stdout); err != nil {
+			return fmt.Errorf("tpl write stdout: %w", err)
+		}
 	} else {
 
 		err = tpl.SaveTo(template) //TODO: This adds two \n at EoF?

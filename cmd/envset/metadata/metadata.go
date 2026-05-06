@@ -64,7 +64,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			shouldClean := false
 			if ok := exists(dir); !ok {
 				shouldClean = true
-				if err = os.MkdirAll(dir, 0755); err != nil {
+				if err = os.MkdirAll(dir, 0750); err != nil {
 					return err
 				}
 			}
@@ -388,10 +388,10 @@ func isMissingRemoteURL(err error) bool {
 }
 
 func writeMetadataFile(path, contents string) error {
-	if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(contents), 0600); err != nil {
 		return err
 	}
-	return os.Chmod(path, 0644)
+	return os.Chmod(path, 0600)
 }
 
 func validateMetadataArgs(source, target string) string {

@@ -23,11 +23,23 @@ func GetVersion() string {
 func Print(w io.Writer) error {
 	tw := new(tabwriter.Writer)
 	tw.Init(w, 0, 0, 0, ' ', tabwriter.AlignRight)
-	fmt.Fprintln(tw)
-	fmt.Fprintln(tw, "Version:", "\t", Tag)
-	fmt.Fprintln(tw, "Build Commit Hash:", "\t", Commit)
-	fmt.Fprintln(tw, "Build Time:", "\t", Time)
-	fmt.Fprintln(tw, "Build User:", "\t", User)
-	fmt.Fprintln(tw)
+	if _, err := fmt.Fprintln(tw); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(tw, "Version:", "\t", Tag); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(tw, "Build Commit Hash:", "\t", Commit); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(tw, "Build Time:", "\t", Time); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(tw, "Build User:", "\t", User); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(tw); err != nil {
+		return err
+	}
 	return tw.Flush()
 }

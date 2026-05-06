@@ -2,7 +2,7 @@ package envset
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 -- md5 remains supported for legacy metadata fingerprints, not cryptographic security.
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -159,7 +159,7 @@ func (e EnvFile) ToJSON() (string, error) {
 
 // FromJSON load from json file
 func (e *EnvFile) FromJSON(path string) error {
-	file, err := os.ReadFile(path)
+	file, err := os.ReadFile(path) // #nosec G304 -- metadata compare intentionally reads user-provided file paths.
 	if err != nil {
 		return fmt.Errorf("read file %s: %w", path, err)
 	}
@@ -308,7 +308,7 @@ func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
 }
 
 func md5HashValue(value string) (string, error) {
-	hash := md5.New()
+	hash := md5.New() // #nosec G401 -- md5 remains supported for legacy metadata fingerprints, not cryptographic security.
 	hash.Write([]byte(value))
 	sha := fmt.Sprintf("%x", hash.Sum(nil))
 	return sha, nil

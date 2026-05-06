@@ -475,20 +475,30 @@ func rm(dir string, t *testing.T) {
 }
 
 func cd(dir string, t *testing.T) string {
+	t.Helper()
+
 	cur, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("error cd dir: %q ", err)
 	}
-	os.Chdir(dir)
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("error cd dir %s: %q ", dir, err)
+	}
 	return cur
 }
 
 func md5sum(filePath string, t *testing.T) string {
+	t.Helper()
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		t.Fatalf("error removing dir: %q ", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			t.Fatalf("error closing file %s: %q", filePath, err)
+		}
+	}()
 
 	hash := md5.New()
 	if _, err := io.Copy(hash, file); err != nil {
