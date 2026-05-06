@@ -10,12 +10,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var excludeFromRestart bool
-
 // GetCommand export command
 func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command {
 
-	excludeFromRestart = cnf.RestartForEnv(env)
+	restartForEnv := cnf.RestartForEnv(env)
 
 	return &cli.Command{
 		Name:        env,
@@ -58,7 +56,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			&cli.BoolFlag{
 				Name:  "restart",
 				Usage: "re-execute command when it exit is error code",
-				Value: excludeFromRestart,
+				Value: restartForEnv,
 			},
 			&cli.BoolFlag{
 				Name:  "forever",
@@ -79,12 +77,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			required := c.StringSlice("required")
 			required = cnf.MergeRequired(env, required)
 
-			max := c.Int("max-restarts")
-			restart := c.Bool("restart")
-			if c.Bool("forever") && !excludeFromRestart {
-				max = math.MaxInt
-				restart = true
-			}
+			restart, max := restartOptions(c)
 
 			o := envset.RunOptions{
 				Cmd:                 ecmd.Cmd,
@@ -107,4 +100,32 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			return envset.Run(env, o)
 		},
 	}
+}
+
+func restartOptions(c *cli.Context) (bool, int) {
+	restart := c.Bool("restart")
+	max := c.Int("max-restarts")
+
+	if !c.Bool("forever") {
+		return restart, max
+	}
+
+	// An explicit --restart=false must win over restart_forever from .envsetrc.
+	if c.IsSet("restart") && !restart {
+		return false, max
+	}
+
+	// An explicit --forever should enable restart even when restart is disabled
+	// by config, unless --restart=false was also provided.
+	if c.IsSet("forever") {
+		restart = true
+	}
+
+	if !restart {
+		return false, max
+	}
+
+	max = math.MaxInt
+
+	return restart, max
 }
