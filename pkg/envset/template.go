@@ -7,9 +7,9 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-//DocumentTemplate will create or update a document template
-//e.g. envset.tpl that we use to document and to check in our repo
-//so we can keep track of the variables and sections.
+// DocumentTemplate will create or update a document template
+// e.g. envset.tpl that we use to document and to check in our repo
+// so we can keep track of the variables and sections.
 func DocumentTemplate(name, template string, overwrite, print bool) error {
 
 	filename, err := FileFinder(name)
@@ -52,7 +52,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 		}
 
 		for _, k := range sec.KeyStrings() {
-			if tec.HasKey(k) == false {
+			if !tec.HasKey(k) {
 				//our template has entries MY_VAR={{MY_VAR}}
 				_, err := tec.NewKey(k, fmt.Sprintf("{{%s}}", k))
 				if err != nil {
@@ -67,7 +67,7 @@ func DocumentTemplate(name, template string, overwrite, print bool) error {
 		}
 
 		for _, k := range tec.KeyStrings() {
-			if sec.HasKey(k) == false {
+			if !sec.HasKey(k) {
 				tec.DeleteKey(k)
 			}
 		}

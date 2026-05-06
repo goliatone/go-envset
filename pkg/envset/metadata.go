@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -24,7 +23,7 @@ const (
 	HashMD5 = "md5"
 )
 
-//EnvFile struct
+// EnvFile struct
 type EnvFile struct {
 	//TODO: make relative to executable
 	Path      string        `json:"-"`
@@ -37,7 +36,7 @@ type EnvFile struct {
 	secret    string
 }
 
-//EnvSection is a top level section
+// EnvSection is a top level section
 type EnvSection struct {
 	Name      string    `json:"name"`
 	Comment   string    `json:"comment,omitempty"`
@@ -47,7 +46,7 @@ type EnvSection struct {
 	maxLength int
 }
 
-//AddKey adds a new key to the section
+// AddKey adds a new key to the section
 func (e *EnvSection) AddKey(key, value string) (*EnvKey, error) {
 
 	hash, err := e.makeHash(key, value)
@@ -89,12 +88,12 @@ func (e *EnvSection) makeHash(key, value string) (string, error) {
 	return hash, err
 }
 
-//IsEmpty will return true if we have no keys in our section
+// IsEmpty will return true if we have no keys in our section
 func (e *EnvSection) IsEmpty() bool {
 	return len(e.Keys) == 0
 }
 
-//ToJSON returns a JSON representation of a section
+// ToJSON returns a JSON representation of a section
 func (e *EnvSection) ToJSON() (string, error) {
 	b, err := json.MarshalIndent(e, "", "    ")
 	if err != nil {
@@ -103,7 +102,7 @@ func (e *EnvSection) ToJSON() (string, error) {
 	return string(b), nil
 }
 
-//EnvKey is a single entry in our file
+// EnvKey is a single entry in our file
 type EnvKey struct {
 	Name    string `json:"key"`
 	Value   string `json:"value,omitempty"`
@@ -111,8 +110,8 @@ type EnvKey struct {
 	Comment string `json:"comment,omitempty"`
 }
 
-//Load will load the ini file
-func (e EnvFile) Load(path string) error {
+// Load will load the ini file
+func (e *EnvFile) Load(path string) error {
 	file, err := ini.Load(path)
 	if err != nil {
 		return fmt.Errorf("ini load: %w", err)
@@ -124,7 +123,7 @@ func (e EnvFile) Load(path string) error {
 	return nil
 }
 
-//AddSection will add a section to a EnvFile
+// AddSection will add a section to a EnvFile
 func (e *EnvFile) AddSection(name string) *EnvSection {
 	es := &EnvSection{
 		Name:      name,
@@ -137,8 +136,8 @@ func (e *EnvFile) AddSection(name string) *EnvSection {
 	return es
 }
 
-//GetSection will return a EnvSection by name or an error if is
-//not found
+// GetSection will return a EnvSection by name or an error if is
+// not found
 func (e *EnvFile) GetSection(name string) (*EnvSection, error) {
 
 	for _, section := range e.Sections {
@@ -146,10 +145,10 @@ func (e *EnvFile) GetSection(name string) (*EnvSection, error) {
 			return section, nil
 		}
 	}
-	return &EnvSection{}, errors.New("Section not found")
+	return &EnvSection{}, errors.New("section not found")
 }
 
-//ToJSON will print the JSON representation for a envfile
+// ToJSON will print the JSON representation for a envfile
 func (e EnvFile) ToJSON() (string, error) {
 	b, err := json.MarshalIndent(e, "", "    ")
 	if err != nil {
@@ -158,9 +157,9 @@ func (e EnvFile) ToJSON() (string, error) {
 	return string(b), nil
 }
 
-//FromJSON load from json file
+// FromJSON load from json file
 func (e *EnvFile) FromJSON(path string) error {
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("read file %s: %w", path, err)
 	}
@@ -173,12 +172,12 @@ func (e *EnvFile) FromJSON(path string) error {
 	return nil
 }
 
-//FromStdin read from stdin
+// FromStdin read from stdin
 func (e *EnvFile) FromStdin() error {
 	return json.NewDecoder(os.Stdin).Decode(&e)
 }
 
-//MetadataOptions are the command options
+// MetadataOptions are the command options
 type MetadataOptions struct {
 	Name          string
 	Filepath      string
@@ -192,7 +191,7 @@ type MetadataOptions struct {
 	Secret        string
 }
 
-//CreateMetadataFile will create or update metadata file
+// CreateMetadataFile will create or update metadata file
 func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 
 	filename, err := FileFinder(o.Name)
@@ -228,8 +227,8 @@ func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 		secName := sec.Name()
 
 		//Check for defaults sections
-		if secName == ini.DEFAULT_SECTION {
-			if len(sec.KeyStrings()) == 0 || o.Globals == false {
+		if secName == ini.DefaultSection {
+			if len(sec.KeyStrings()) == 0 || !o.Globals {
 				continue
 			}
 		}
@@ -246,7 +245,7 @@ func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 			v := sec.Key(k).String()
 			envKey, err := envSect.AddKey(k, v)
 
-			if o.Values == false {
+			if !o.Values {
 				envKey.Value = ""
 			}
 
@@ -263,7 +262,7 @@ func CreateMetadataFile(o MetadataOptions) (EnvFile, error) {
 	return envFile, nil
 }
 
-//LoadMetadataFile will load a metadata file from the provided path
+// LoadMetadataFile will load a metadata file from the provided path
 func LoadMetadataFile(path string) (*EnvFile, error) {
 	envFile := &EnvFile{}
 	err := envFile.FromJSON(path)
@@ -273,7 +272,7 @@ func LoadMetadataFile(path string) (*EnvFile, error) {
 	return envFile, nil
 }
 
-//CompareMetadataFiles will compare two EnvFile instances
+// CompareMetadataFiles will compare two EnvFile instances
 func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
 
 	if a.Algorithm != b.Algorithm {
@@ -284,29 +283,20 @@ func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
 		return true, nil
 	}
 
-	for _, sa := range a.Sections {
-		for _, sb := range b.Sections {
-			if sa.Name != sb.Name {
-				continue
-			}
-			diff := CompareSections(*sa, *sb, []string{})
-			if !diff.IsEmpty() {
-				return true, nil
-			}
-			break
-		}
+	sections := make(map[string]*EnvSection, len(b.Sections))
+	for _, sb := range b.Sections {
+		sections[sb.Name] = sb
 	}
 
-	for _, sb := range b.Sections {
-		for _, sa := range a.Sections {
-			if sa.Name != sb.Name {
-				continue
-			}
-			diff := CompareSections(*sa, *sb, []string{})
-			if !diff.IsEmpty() {
-				return true, nil
-			}
-			break
+	for _, sa := range a.Sections {
+		sb, ok := sections[sa.Name]
+		if !ok {
+			return true, nil
+		}
+
+		diff := CompareSections(*sa, *sb, []string{})
+		if !diff.IsEmpty() {
+			return true, nil
 		}
 	}
 
@@ -334,7 +324,7 @@ func hmacSha256HashValue(value, secret string) (string, error) {
 	return sha, nil
 }
 
-//CompareSections will compare two sections and return diff
+// CompareSections will compare two sections and return diff
 func CompareSections(s1, s2 EnvSection, ignored []string) EnvSection {
 	ignore := make(map[string]bool)
 	for _, v := range ignored {
@@ -374,7 +364,7 @@ func CompareSections(s1, s2 EnvSection, ignored []string) EnvSection {
 			continue
 		}
 
-		if _, ok := seen[k2.Name]; ok == false {
+		if _, ok := seen[k2.Name]; !ok {
 			k2.Comment = "missing in source"
 			diff.Keys = append(diff.Keys, k2)
 		}

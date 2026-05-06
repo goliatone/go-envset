@@ -17,7 +17,7 @@ func CmdFromArgs(args []string) ExecCmd {
 		}
 	}
 
-	if idx > 0 && len(args) >= idx {
+	if idx > 0 && len(args) > idx {
 		cmd = args[idx]
 		a = args[idx+1:]
 	}
