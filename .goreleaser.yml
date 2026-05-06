@@ -1,12 +1,9 @@
-# This is an example goreleaser.yaml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+version: 2
+
 project_name: envset
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod download
-    # you may remove this if you don't need go generate
-    # - go generate ./...
 builds:
   - env:
       - CGO_ENABLED=0
@@ -19,6 +16,11 @@ builds:
       - amd64
       - arm
       - arm64
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm
     main: "./cmd/envset/main.go"
     binary: "envset"
     ldflags:
@@ -27,13 +29,11 @@ builds:
       - -X github.com/goliatone/go-envset/pkg/version.Time={{.Date}}
       - -X github.com/goliatone/go-envset/pkg/version.User=goliatone
 archives:
-  - replacements:
-      386: i386
-      amd64: x86_64
+  - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}{{ with .Arm }}v{{ . }}{{ end }}'
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
@@ -44,7 +44,7 @@ changelog:
       - "merge fix"
 brews:
   - name: envset
-    tap:
+    repository:
       owner: goliatone
       name: homebrew-tap
     description: run commands in an environment defined using a ini configuration file.
@@ -53,11 +53,9 @@ brews:
     test: |
       system "#{bin}/envset -V"
 nfpms:
-  - id: envset 
-    replacements:
-      386: i386
-      amd64: x86_64
-    bindir: /usr/local/bin/ 
+  - id: envset
+    file_name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}{{ with .Arm }}v{{ . }}{{ end }}'
+    bindir: /usr/local/bin/
     maintainer: goliatone <envset@goliat.one>
     description: run commands in an environment defined using a ini configuration file.
     homepage: https://github.com/goliatone/go-envset
