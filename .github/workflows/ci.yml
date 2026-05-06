@@ -6,6 +6,9 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: "Build - Test - Release"
@@ -13,20 +16,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        go: ["1.17"]
     env:
       VERBOSE: 1
       GOFLAGS: -mod=readonly
       GOPROXY: https://proxy.golang.org
 
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
-
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
 
       - name: Run build
         run: ./taskfile ci:build
@@ -38,7 +40,7 @@ jobs:
         run: ./taskfile ci:clean
 
       - name: Run release
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v7
         with:
-          version: latest
-          args: release --snapshot --skip-publish --rm-dist
+          version: "~> v2"
+          args: release --snapshot --clean

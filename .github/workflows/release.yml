@@ -3,23 +3,33 @@ on:
   push:
     tags:
       - v*.*.*
+
+permissions:
+  contents: write
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Unshallow Fetch
-        run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v6
         with:
-          go-version: "^1.13.0"
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
       - name: Release via goreleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v7
         with:
-          args: release
+          version: "~> v2"
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GO_RELEASER_HOMEBREW_TAP }}
-      - name: "Create latest tag"
-        uses: EndBug/latest-tag@latest
-        with:
-          description: "lgr latest release"
+
+      - name: Update latest tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa latest -m "lgr latest release" "${GITHUB_SHA}"
+          git push origin refs/tags/latest --force
