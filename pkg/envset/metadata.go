@@ -279,6 +279,10 @@ func CompareMetadataFiles(a, b *EnvFile) (bool, error) {
 		return false, &ErrorWrongAlgorithm{source: a.Algorithm, target: b.Algorithm}
 	}
 
+	if a.Filename != b.Filename || a.Project != b.Project {
+		return true, nil
+	}
+
 	if len(a.Sections) != len(b.Sections) {
 		return true, nil
 	}
