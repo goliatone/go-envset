@@ -8,8 +8,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-//GetCommand returns a new cli.Command for the
-//rc command.
+// GetCommand returns a new cli.Command for the
+// rc command.
 func GetCommand(cnf *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:        "config",

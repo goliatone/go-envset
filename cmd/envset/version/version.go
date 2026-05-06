@@ -6,8 +6,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-//GetCommand returns a new cli.Command for the
-//version command
+// GetCommand returns a new cli.Command for the
+// version command
 func GetCommand(cnf *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "version",
