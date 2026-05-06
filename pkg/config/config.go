@@ -1,8 +1,8 @@
 package config
 
 import (
-	"fmt"
 	"path"
+	"slices"
 	"time"
 
 	"github.com/goliatone/go-envset/pkg/envset"
@@ -184,23 +184,6 @@ func (c *Config) Get(key string) string {
 	}
 }
 
-func printMap(s map[string][]string) string {
-	o := ""
-	for k, m := range s {
-		l := printList(m)
-		o += fmt.Sprintf("%s - \n%s", k, l)
-	}
-	return o
-}
-
-func printList(a []string) string {
-	o := ""
-	for _, s := range a {
-		o += fmt.Sprintf("%s\n", s)
-	}
-	return o
-}
-
 // ListKeys returns the list of config keys
 func (c *Config) ListKeys() []string {
 	return []string{
@@ -218,10 +201,8 @@ func (c *Config) ListKeys() []string {
 
 // RestartForEnv will return the restart value based on the env
 func (c *Config) RestartForEnv(env string) bool {
-	for _, exc := range c.ExcludeFromRestart {
-		if exc == env {
-			return false
-		}
+	if slices.Contains(c.ExcludeFromRestart, env) {
+		return false
 	}
 	return c.Restart
 }
