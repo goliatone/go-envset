@@ -1,13 +1,12 @@
 package envset
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
-	"text/template"
 
 	"gopkg.in/ini.v1"
 )
@@ -58,20 +57,11 @@ func LoadIniSection(sec *ini.Section) EnvMap {
 
 // Expand ${VAR} and $(command) in values
 func (e EnvMap) Expand(osExpand bool) error {
-	for k, v := range e {
-		res, err := interpolateVars(v, e)
+	resolver := newEnvResolver(e, osExpand)
+	for _, k := range sortedEnvKeys(e) {
+		res, err := resolver.resolveKey(k)
 		if err != nil {
-			return fmt.Errorf("interpolate vars: %w", err)
-		}
-
-		res, err = interpolateCmds(res, e)
-		if err != nil {
-			return ErrorRunningCommand{err, "error running command"}
-		}
-
-		//try using built in shell variables
-		if osExpand {
-			res = os.ExpandEnv(res)
+			return err
 		}
 
 		e[k] = res
@@ -159,6 +149,104 @@ func expandBracedEnv(str string) string {
 		i = i + 2 + end + 1
 	}
 	return out.String()
+}
+
+type envResolver struct {
+	source    EnvMap
+	resolved  EnvMap
+	resolving map[string]bool
+	osExpand  bool
+}
+
+func newEnvResolver(source EnvMap, osExpand bool) *envResolver {
+	return &envResolver{
+		source:    source,
+		resolved:  make(EnvMap, len(source)),
+		resolving: make(map[string]bool, len(source)),
+		osExpand:  osExpand,
+	}
+}
+
+func (r *envResolver) resolveKey(key string) (string, error) {
+	if val, ok := r.resolved[key]; ok {
+		return val, nil
+	}
+
+	if r.resolving[key] {
+		return "", fmt.Errorf("cyclic variable reference involving %s", key)
+	}
+
+	raw, ok := r.source[key]
+	if !ok {
+		return "", fmt.Errorf("unknown variable %s", key)
+	}
+
+	r.resolving[key] = true
+	defer delete(r.resolving, key)
+
+	res, err := interpolateVarsWithResolver(raw, func(ref string) (string, bool, error) {
+		if _, ok := r.source[ref]; !ok {
+			return "", false, nil
+		}
+		val, err := r.resolveKey(ref)
+		return val, true, err
+	})
+	if err != nil {
+		return "", fmt.Errorf("interpolate vars for %s: %w", key, err)
+	}
+
+	if hasCommandSubstitution(res) {
+		cmdVars, err := r.commandEnv(key)
+		if err != nil {
+			return "", err
+		}
+		res, err = interpolateCmds(res, cmdVars)
+		if err != nil {
+			return "", ErrorRunningCommand{err, "error running command"}
+		}
+	}
+
+	if r.osExpand {
+		res = os.ExpandEnv(res)
+	}
+
+	r.resolved[key] = res
+	return res, nil
+}
+
+func (r *envResolver) commandEnv(current string) (EnvMap, error) {
+	env := make(EnvMap, len(r.source))
+	for _, key := range sortedEnvKeys(r.source) {
+		if key == current {
+			continue
+		}
+		if val, ok := r.resolved[key]; ok {
+			env[key] = val
+			continue
+		}
+		if hasCommandSubstitution(r.source[key]) {
+			continue
+		}
+		val, err := r.resolveKey(key)
+		if err != nil {
+			return nil, err
+		}
+		env[key] = val
+	}
+	return env, nil
+}
+
+func sortedEnvKeys(env EnvMap) []string {
+	keys := make([]string, 0, len(env))
+	for key := range env {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func hasCommandSubstitution(str string) bool {
+	return strings.Contains(str, "$(")
 }
 
 func interpolateCmds(str string, vars map[string]string) (string, error) {
@@ -256,29 +344,40 @@ func runShellCommand(command string, vars map[string]string) (string, error) {
 }
 
 func interpolateVars(str string, vars map[string]string) (string, error) {
-	s := strings.Replace(str, "${", "${.", -1)
-	t, err := template.New(str).Option("missingkey=error").Delims("${", "}").Parse(s)
-	if err != nil {
-		return "", fmt.Errorf("parse template: %w", err)
+	return interpolateVarsWithResolver(str, func(key string) (string, bool, error) {
+		val, ok := vars[key]
+		return val, ok, nil
+	})
+}
+
+func interpolateVarsWithResolver(str string, resolve func(string) (string, bool, error)) (string, error) {
+	var out strings.Builder
+	for i := 0; i < len(str); {
+		if i+2 >= len(str) || str[i] != '$' || str[i+1] != '{' {
+			out.WriteByte(str[i])
+			i++
+			continue
+		}
+
+		end := strings.IndexByte(str[i+2:], '}')
+		if end == -1 {
+			out.WriteString(str[i:])
+			break
+		}
+
+		key := str[i+2 : i+2+end]
+		val, ok, err := resolve(key)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			out.WriteString(val)
+		} else {
+			out.WriteString(str[i : i+2+end+1])
+		}
+		i = i + 2 + end + 1
 	}
-
-	var buf bytes.Buffer
-	err = t.Execute(&buf, vars)
-	if err != nil {
-		return str, nil
-	}
-
-	if buf.Len() == 0 {
-		return str, nil
-	}
-
-	out := buf.String()
-
-	if out == "<no value>" {
-		return str, nil
-	}
-
-	return out, nil
+	return out.String(), nil
 }
 
 /////
