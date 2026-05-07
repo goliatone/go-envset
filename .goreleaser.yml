@@ -48,6 +48,7 @@ brews:
       owner: goliatone
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
     description: run commands in an environment defined using a ini configuration file.
     homepage: https://github.com/goliatone/go-envset
     license: "MIT"
