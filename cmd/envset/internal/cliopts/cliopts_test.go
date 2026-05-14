@@ -274,7 +274,7 @@ func assertEqual[T comparable](t *testing.T, got, want T) {
 	}
 }
 
-func assertDeepEqual(t *testing.T, got, want interface{}) {
+func assertDeepEqual(t *testing.T, got, want any) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %#v, want %#v", got, want)
