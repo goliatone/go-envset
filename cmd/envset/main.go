@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/goliatone/go-envset/cmd/envset/environment"
-	restartopts "github.com/goliatone/go-envset/cmd/envset/internal/restart"
+	"github.com/goliatone/go-envset/cmd/envset/internal/cliopts"
 	"github.com/goliatone/go-envset/cmd/envset/metadata"
 	"github.com/goliatone/go-envset/cmd/envset/rc"
 	"github.com/goliatone/go-envset/cmd/envset/template"
@@ -145,24 +145,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 
 		env := c.String("env")
 
-		required := c.StringSlice("required")
-		required = cnf.MergeRequired(env, required)
-
-		restart, max := restartopts.Options(c)
-
-		o := envset.RunOptions{
-			Cmd:                 ecmd.Cmd,
-			Args:                ecmd.Args,
-			Isolated:            c.Bool("isolated"),
-			Expand:              c.Bool("expand"),
-			Filename:            c.String("env-file"),
-			CommentSectionNames: cnf.CommentSectionNames.Keys,
-			Required:            required,
-			Inherit:             c.StringSlice("inherit"),
-			ExportEnvName:       c.String("export-env-name"),
-			Restart:             restart,
-			MaxRestarts:         max,
-		}
+		o := cliopts.RunOptions(c, cnf, env, ecmd)
 
 		// envset undefined ==> show error: environment undefined does not exist
 		// envset undefined -- node index.js ==> show error: environment undefined does not exist
