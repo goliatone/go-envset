@@ -1,0 +1,129 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dupl
+    - errorlint
+    - exhaustive
+    - gocritic
+    - gocognit
+    - goconst
+    - gosec
+    - maintidx
+    - misspell
+    - mnd
+    - nilerr
+    - nilnesserr
+    - predeclared
+    - revive
+    - tagliatelle
+    - testifylint
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    errorlint:
+      errorf: true
+      errorf-multi: true
+      asserts: true
+      comparison: true
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    gocognit:
+      min-complexity: 25
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+      match-constant: true
+      numbers: false
+
+    maintidx:
+      under: 20
+
+    mnd:
+      checks:
+        - argument
+        - case
+        - condition
+        - operation
+        - return
+        - assign
+      ignored-numbers:
+        - "0"
+        - "1"
+        - "2"
+        - "10"
+        - "12"
+        - "50"
+        - "100"
+        - "0600"
+        - "0750"
+      ignored-functions:
+        - os.Chmod
+        - strings.SplitN
+        - strings.Trim
+        - strings.TrimLeft
+        - strings.TrimRight
+        - time.Duration
+
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: snake
+          toml: snake
+          mapstructure: snake
+
+    testifylint:
+      enable-all: true
+
+  exclusions:
+    paths:
+      - ^node_modules/
+      - ^dist/
+      - ^\.tmp/
+    rules:
+      - linters:
+          - goconst
+          - gosec
+          - mnd
+        path: "_test\\.go"
+      - linters:
+          - gocritic
+        text: "commentFormatting:"
+      - linters:
+          - gocritic
+        text: "ifElseChain:"
+      - linters:
+          - revive
+        text: "package-comments:"
+      - linters:
+          - revive
+        text: "exported:"
+      - linters:
+          - revive
+        text: "redefines-builtin-id:"
+      - linters:
+          - revive
+        text: "unused-parameter:"
+      - linters:
+          - maintidx
+        path: "cmd/envset/metadata/metadata.go"
+      - linters:
+          - unparam
+        path: "pkg/envset/metadata.go"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
