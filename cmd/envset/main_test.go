@@ -371,6 +371,72 @@ func Test_TrailingSeparatorDoesNotPanic(t *testing.T) {
 	}
 }
 
+func Test_EnvironmentGlobalRunFlagsOverrideCommandDefaults(t *testing.T) {
+	dir := setupPrecedenceTestDir(t)
+	previousDir := cd(dir, t)
+	defer cd(previousDir, t)
+
+	t.Setenv("ENVSET_HOST_ONLY", "host-value")
+
+	tests := []struct {
+		name    string
+		args    []string
+		wantOK  bool
+		wantOut string
+	}{
+		{
+			name:   "env file",
+			args:   []string{"--env-file=.custom-envset", "development", "--restart=false", "--", "sh", "-c", "test \"$A\" = custom"},
+			wantOK: true,
+		},
+		{
+			name:   "isolated false",
+			args:   []string{"--isolated=false", "development", "--restart=false", "--", "sh", "-c", "test \"$ENVSET_HOST_ONLY\" = host-value"},
+			wantOK: true,
+		},
+		{
+			name:   "inherit",
+			args:   []string{"--inherit=ENVSET_HOST_ONLY", "development", "--restart=false", "--", "sh", "-c", "test \"$ENVSET_HOST_ONLY\" = host-value"},
+			wantOK: true,
+		},
+		{
+			name:   "required",
+			args:   []string{"--required=MISSING_REQUIRED", "development", "--restart=false", "--", "true"},
+			wantOK: false,
+		},
+		{
+			name:   "export env name",
+			args:   []string{"--export-env-name=ENVSET_ENV", "development", "--restart=false", "--", "sh", "-c", "test \"$ENVSET_ENV\" = development"},
+			wantOK: true,
+		},
+		{
+			name:   "expand false",
+			args:   []string{"--expand=false", "development", "--restart=false", "--", "sh", "-c", "test \"$B\" = '${ENVSET_HOST_ONLY}'"},
+			wantOK: true,
+		},
+		{
+			name:   "local env file wins over global",
+			args:   []string{"--env-file=.custom-envset", "development", "--env-file=.local-envset", "--restart=false", "--", "sh", "-c", "test \"$A\" = local"},
+			wantOK: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testcli.Run(bin, tt.args...)
+			if tt.wantOK && !testcli.Success() {
+				t.Fatalf("Expected to succeed, stdout: %q stderr: %q error: %q", testcli.Stdout(), testcli.Stderr(), testcli.Error())
+			}
+			if !tt.wantOK && testcli.Success() {
+				t.Fatalf("Expected to fail, stdout: %q stderr: %q", testcli.Stdout(), testcli.Stderr())
+			}
+			if tt.wantOut != "" && !testcli.StdoutContains(tt.wantOut) {
+				t.Fatalf("Expected stdout %q to contain %q", testcli.Stdout(), tt.wantOut)
+			}
+		})
+	}
+}
+
 func Test_Template(t *testing.T) {
 	dir := cd("testdata", t)
 	rm("envset.example", t)
@@ -406,6 +472,42 @@ func Test_TemplateOptions(t *testing.T) {
 
 	rm("output", t)
 	cd(dir, t)
+}
+
+func Test_TemplateGlobalEnvFileOverridesCommandDefault(t *testing.T) {
+	dir := setupPrecedenceTestDir(t)
+	previousDir := cd(dir, t)
+	defer cd(previousDir, t)
+
+	testcli.Run(bin, "--env-file=.custom-envset", "template", "--print")
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, stdout: %q stderr: %q error: %q", testcli.Stdout(), testcli.Stderr(), testcli.Error())
+	}
+	if !testcli.StdoutContains("CUSTOM_ONLY={{CUSTOM_ONLY}}") {
+		t.Fatalf("Expected stdout %q to contain custom template key", testcli.Stdout())
+	}
+	if testcli.StdoutContains("DEFAULT_ONLY={{DEFAULT_ONLY}}") {
+		t.Fatalf("Expected stdout %q to not contain default template key", testcli.Stdout())
+	}
+}
+
+func Test_MetadataGlobalEnvFileOverridesCommandDefault(t *testing.T) {
+	dir := setupPrecedenceTestDir(t)
+	previousDir := cd(dir, t)
+	defer cd(previousDir, t)
+
+	testcli.Run(bin, "--env-file=.custom-envset", "metadata", "--print", "--values")
+
+	if !testcli.Success() {
+		t.Fatalf("Expected to succeed, stdout: %q stderr: %q error: %q", testcli.Stdout(), testcli.Stderr(), testcli.Error())
+	}
+	if !testcli.StdoutContains("CUSTOM_ONLY") {
+		t.Fatalf("Expected stdout %q to contain custom metadata key", testcli.Stdout())
+	}
+	if testcli.StdoutContains("DEFAULT_ONLY") {
+		t.Fatalf("Expected stdout %q to not contain default metadata key", testcli.Stdout())
+	}
 }
 
 func rm(dir string, t *testing.T) {
@@ -471,4 +573,53 @@ func assertRegularFileMode(t *testing.T, filePath string) {
 		t.Fatalf("%s mode = %v, want no executable bits", filePath, info.Mode().Perm())
 	}
 	assertNotGroupOrWorldWritable(t, filePath)
+}
+
+func setupPrecedenceTestDir(t *testing.T) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".envsetrc"), `filename=.envset
+expand=true
+isolated=true
+export_environment=APP_ENV
+restart=true
+max_restarts=3
+restart_forever=false
+
+[environments]
+name=development
+`)
+	writeFile(t, filepath.Join(dir, ".envset"), `[development]
+A=default
+B=${ENVSET_HOST_ONLY}
+DEFAULT_ONLY=1
+`)
+	writeFile(t, filepath.Join(dir, ".custom-envset"), `[development]
+A=custom
+CUSTOM_ONLY=1
+`)
+	writeFile(t, filepath.Join(dir, ".local-envset"), `[development]
+A=local
+LOCAL_ONLY=1
+`)
+	cmd := osexec.Command("git", "init")
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git init %s: %v\n%s", dir, err, out)
+	}
+	cmd = osexec.Command("git", "remote", "add", "origin", "https://example.com/envset-test.git")
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git remote add %s: %v\n%s", dir, err, out)
+	}
+
+	return dir
+}
+
+func writeFile(t *testing.T, filename, content string) {
+	t.Helper()
+	if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
+		t.Fatalf("write %s: %v", filename, err)
+	}
 }
