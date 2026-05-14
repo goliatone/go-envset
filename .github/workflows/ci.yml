@@ -33,8 +33,14 @@ jobs:
       - name: Run build
         run: ./taskfile ci:build
 
+      - name: Check formatting
+        run: ./taskfile go:fmt:check
+
       - name: Run test
         run: ./taskfile ci:test
+
+      - name: Run lint
+        run: ./taskfile go:lint
 
       - name: Run clean
         run: ./taskfile ci:clean
