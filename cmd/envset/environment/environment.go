@@ -2,8 +2,8 @@ package environment
 
 import (
 	"fmt"
-	"math"
 
+	restartopts "github.com/goliatone/go-envset/cmd/envset/internal/restart"
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
 	"github.com/goliatone/go-envset/pkg/exec"
@@ -77,7 +77,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			required := c.StringSlice("required")
 			required = cnf.MergeRequired(env, required)
 
-			restart, max := restartOptions(c)
+			restart, max := restartopts.Options(c)
 
 			o := envset.RunOptions{
 				Cmd:                 ecmd.Cmd,
@@ -100,32 +100,4 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			return envset.Run(env, o)
 		},
 	}
-}
-
-func restartOptions(c *cli.Context) (bool, int) {
-	restart := c.Bool("restart")
-	max := c.Int("max-restarts")
-
-	if !c.Bool("forever") {
-		return restart, max
-	}
-
-	// An explicit --restart=false must win over restart_forever from .envsetrc.
-	if c.IsSet("restart") && !restart {
-		return false, max
-	}
-
-	// An explicit --forever should enable restart even when restart is disabled
-	// by config, unless --restart=false was also provided.
-	if c.IsSet("forever") {
-		restart = true
-	}
-
-	if !restart {
-		return false, max
-	}
-
-	max = math.MaxInt
-
-	return restart, max
 }
