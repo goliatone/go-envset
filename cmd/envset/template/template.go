@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/goliatone/go-envset/cmd/envset/internal/cliopts"
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
 	"github.com/urfave/cli/v2"
@@ -26,7 +27,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
-			filename := c.String("env-file")
+			filename := cliopts.String(c, cliopts.EnvFileFlag)
 			template := c.String("filename")
 			dir := c.String("filepath")
 			overwrite := c.Bool("overwrite")
