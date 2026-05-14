@@ -3,7 +3,7 @@ package environment
 import (
 	"fmt"
 
-	restartopts "github.com/goliatone/go-envset/cmd/envset/internal/restart"
+	"github.com/goliatone/go-envset/cmd/envset/internal/cliopts"
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
 	"github.com/goliatone/go-envset/pkg/exec"
@@ -74,24 +74,7 @@ func GetCommand(env string, ecmd exec.ExecCmd, cnf *config.Config) *cli.Command 
 			//TODO: we want to support .env.local => [local]
 			env := c.Command.Name
 
-			required := c.StringSlice("required")
-			required = cnf.MergeRequired(env, required)
-
-			restart, max := restartopts.Options(c)
-
-			o := envset.RunOptions{
-				Cmd:                 ecmd.Cmd,
-				Args:                ecmd.Args,
-				Isolated:            c.Bool("isolated"),
-				Expand:              c.Bool("expand"),
-				Filename:            c.String("env-file"),
-				CommentSectionNames: cnf.CommentSectionNames.Keys,
-				Required:            required,
-				Inherit:             c.StringSlice("inherit"),
-				ExportEnvName:       c.String("export-env-name"),
-				Restart:             restart,
-				MaxRestarts:         max,
-			}
+			o := cliopts.RunOptions(c, cnf, env, ecmd)
 
 			if ecmd.Cmd == "" {
 				return envset.Print(env, o)
