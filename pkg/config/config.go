@@ -140,7 +140,8 @@ func (c *Config) MergeIgnored(section string, ignored []string) []string {
 	if i := c.Ignored[section]; len(i) == 0 {
 		return ignored
 	}
-	out := append(c.Ignored[section], ignored...)
+	out := append([]string{}, c.Ignored[section]...)
+	out = append(out, ignored...)
 	//TODO: should we make them unique?
 	return out
 }
@@ -151,7 +152,8 @@ func (c *Config) MergeRequired(section string, required []string) []string {
 	if i := c.Required[section]; len(i) == 0 {
 		return required
 	}
-	out := append(c.Required[section], required...)
+	out := append([]string{}, c.Required[section]...)
+	out = append(out, required...)
 	//TODO: should we make them unique?
 	return out
 }
