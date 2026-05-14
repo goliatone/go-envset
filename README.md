@@ -117,6 +117,15 @@ There are three flags you can use to manage the restart behavior:
 
 All these can be configured using an `.envsetrc` [file](#envsetrc).
 
+Explicit CLI flags override `.envsetrc` values. For environment commands, run flags
+may be placed before or after the environment name; if both positions set the same
+flag, the environment-specific flag wins.
+
+```console
+$ envset --restart=false development -- node app.js
+$ envset development --restart=false -- node app.js
+```
+
 This will restart the node app for a maximum of `--max-restarts`.
 
 ```console
