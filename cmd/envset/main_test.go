@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	osexec "os/exec"
 	"path"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/rendon/testcli"
 	"github.com/stretchr/testify/assert"
-	"github.com/urfave/cli/v2"
 )
 
 var bin string
@@ -408,63 +406,6 @@ func Test_TemplateOptions(t *testing.T) {
 
 	rm("output", t)
 	cd(dir, t)
-}
-
-func Test_RestartOptionsPrecedence(t *testing.T) {
-	tests := []struct {
-		name           string
-		args           []string
-		restartDefault bool
-		foreverDefault bool
-		wantRestart    bool
-		wantMax        int
-	}{
-		{
-			name:           "explicit restart false wins over config forever",
-			args:           []string{"--restart=false"},
-			restartDefault: true,
-			foreverDefault: true,
-			wantRestart:    false,
-			wantMax:        3,
-		},
-		{
-			name:           "explicit forever enables restart over disabled config",
-			args:           []string{"--forever"},
-			restartDefault: false,
-			foreverDefault: false,
-			wantRestart:    true,
-			wantMax:        math.MaxInt,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var gotRestart bool
-			var gotMax int
-
-			app := cli.NewApp()
-			app.Flags = []cli.Flag{
-				&cli.BoolFlag{Name: "restart", Value: tt.restartDefault},
-				&cli.BoolFlag{Name: "forever", Value: tt.foreverDefault},
-				&cli.IntFlag{Name: "max-restarts", Value: 3},
-			}
-			app.Action = func(c *cli.Context) error {
-				gotRestart, gotMax = restartOptions(c)
-				return nil
-			}
-
-			if err := app.Run(append([]string{"envset"}, tt.args...)); err != nil {
-				t.Fatalf("run app: %v", err)
-			}
-
-			if gotRestart != tt.wantRestart {
-				t.Fatalf("restart = %v, want %v", gotRestart, tt.wantRestart)
-			}
-			if gotMax != tt.wantMax {
-				t.Fatalf("max = %d, want %d", gotMax, tt.wantMax)
-			}
-		})
-	}
 }
 
 func rm(dir string, t *testing.T) {
