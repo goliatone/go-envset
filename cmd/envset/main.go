@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"time"
 
 	"github.com/goliatone/go-envset/cmd/envset/environment"
+	restartopts "github.com/goliatone/go-envset/cmd/envset/internal/restart"
 	"github.com/goliatone/go-envset/cmd/envset/metadata"
 	"github.com/goliatone/go-envset/cmd/envset/rc"
 	"github.com/goliatone/go-envset/cmd/envset/template"
@@ -148,7 +148,7 @@ func run(args []string, ecmd exec.ExecCmd) {
 		required := c.StringSlice("required")
 		required = cnf.MergeRequired(env, required)
 
-		restart, max := restartOptions(c)
+		restart, max := restartopts.Options(c)
 
 		o := envset.RunOptions{
 			Cmd:                 ecmd.Cmd,
@@ -191,29 +191,4 @@ func run(args []string, ecmd exec.ExecCmd) {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)
 	}
-}
-
-func restartOptions(c *cli.Context) (bool, int) {
-	restart := c.Bool("restart")
-	max := c.Int("max-restarts")
-
-	if !c.Bool("forever") {
-		return restart, max
-	}
-
-	if c.IsSet("restart") && !restart {
-		return false, max
-	}
-
-	if c.IsSet("forever") {
-		restart = true
-	}
-
-	if !restart {
-		return false, max
-	}
-
-	max = math.MaxInt
-
-	return restart, max
 }
