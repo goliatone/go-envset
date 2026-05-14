@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goliatone/go-envset/cmd/envset/internal/cliopts"
 	"github.com/goliatone/go-envset/pkg/config"
 	"github.com/goliatone/go-envset/pkg/envset"
 	"github.com/gosuri/uitable"
@@ -42,7 +43,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			print := c.Bool("print")
-			envfile := c.String("env-file")
+			envfile := cliopts.String(c, cliopts.EnvFileFlag)
 			filename := c.String("filename")
 			originalDir := c.String("filepath")
 			overwrite := c.Bool("overwrite")
@@ -114,7 +115,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				return fmt.Errorf("env file to json: %w", err)
 			}
 
-			str = str + "\n"
+			str += "\n"
 
 			if o.Print {
 
