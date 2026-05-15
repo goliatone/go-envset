@@ -93,7 +93,10 @@ func Load(name string) (*Config, error) {
 	var cfg *ini.File
 	var filename string
 
-	filename, _ = envset.FileFinder(name)
+	filename, err = envset.FileFinder(name)
+	if err != nil && !envset.IsFileNotFound(err) {
+		return &Config{}, err
+	}
 
 	if filename == "" {
 		cfg, err = ini.ShadowLoad(config)

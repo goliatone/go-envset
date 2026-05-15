@@ -164,7 +164,7 @@ func (e *EnvFile) FromJSON(path string) error {
 		return fmt.Errorf("read file %s: %w", path, err)
 	}
 
-	err = json.Unmarshal([]byte(file), &e)
+	err = json.Unmarshal(file, e)
 	if err != nil {
 		return fmt.Errorf("unmarshal file %s: %w", path, err)
 	}

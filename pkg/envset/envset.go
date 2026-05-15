@@ -199,7 +199,7 @@ func getEnvFile(options RunOptions) (*ini.File, error) {
 		if ini.IsErrDelimiterNotFound(err) {
 			fmt.Printf("The file \"%s\" has an error and we can't parse it.\n", options.Filename)
 			fmt.Println("It looks as if you forgot a variable name.")
-			delErr := err.(ini.ErrDelimiterNotFound)
+			var delErr ini.ErrDelimiterNotFound
 			if errors.As(err, &delErr) {
 				fmt.Printf("The offending line content: %s\n", delErr.Line)
 			}

@@ -108,7 +108,10 @@ func (e EnvMap) ToKVStrings() []string {
 
 // InterpolateKVStrings replace ${VAR} in the executable cmd arguments
 func InterpolateKVStrings(args []string, context EnvMap, expand bool) []string {
-	args, _ = interpolateKVStrings(args, context, expand)
+	args, err := interpolateKVStrings(args, context, expand)
+	if err != nil {
+		return args
+	}
 	return args
 }
 
