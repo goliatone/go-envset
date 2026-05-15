@@ -55,7 +55,7 @@ func Test_LoadJSON(t *testing.T) {
 
 func Test_LoadIniSection(t *testing.T) {
 
-	cfg, _ := ini.Load(
+	cfg, err := ini.Load(
 		[]byte(`
 [test]
 TEST_KEY_1=value1
@@ -63,8 +63,14 @@ TEST_KEY_2=value2
 TEST_KEY_3=value3
 		`),
 	)
+	if err != nil {
+		t.Fatalf("ini load: %v", err)
+	}
 
-	sec, _ := cfg.GetSection("test")
+	sec, err := cfg.GetSection("test")
+	if err != nil {
+		t.Fatalf("get section: %v", err)
+	}
 
 	result := LoadIniSection(sec)
 

@@ -18,7 +18,10 @@ import (
 var bin string
 
 func init() {
-	cur, _ := os.Getwd()
+	cur, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Sprintf("get wd: %v", err))
+	}
 	bin = path.Join(cur, "envset")
 }
 
@@ -38,7 +41,10 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
-	_ = os.Remove(bin)
+	if err := os.Remove(bin); err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "remove test bin: %v\n", err)
+		code = 1
+	}
 	os.Exit(code)
 }
 
