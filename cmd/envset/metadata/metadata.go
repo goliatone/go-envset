@@ -41,106 +41,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 				Value:   envset.HashSHA256,
 			},
 		},
-		Action: func(c *cli.Context) error {
-			print := c.Bool("print")
-			envfile := cliopts.String(c, cliopts.EnvFileFlag)
-			filename := c.String("filename")
-			originalDir := c.String("filepath")
-			overwrite := c.Bool("overwrite")
-			values := c.Bool("values")
-			globals := c.Bool("globals")
-			secret := c.String("secret")
-			algorithm := c.String("hash-algo")
-
-			projectURL, err := gitconfig.OriginURL()
-			if err != nil && !isMissingRemoteURL(err) {
-				return err
-			}
-
-			dir, err := filepath.Abs(originalDir)
-			if err != nil {
-				return err
-			}
-
-			shouldClean := false
-			if ok := exists(dir); !ok {
-				shouldClean = true
-				if err = os.MkdirAll(dir, 0750); err != nil {
-					return err
-				}
-			}
-
-			//TODO: This should take a a template file which we use to run against our thing
-			filename = filepath.Join(dir, filename)
-
-			if secret != "" {
-				algorithm = envset.HashHMAC
-			}
-
-			o := envset.MetadataOptions{
-				Name:          envfile,
-				Filepath:      filename,
-				Algorithm:     algorithm,
-				Project:       projectURL,
-				Globals:       globals,
-				GlobalSection: "globals", //TODO: make flag
-				Overwrite:     overwrite,
-				Print:         print,
-				Values:        values,
-				Secret:        secret,
-			}
-
-			newEnv, err := envset.CreateMetadataFile(o)
-			if err != nil {
-				return err
-			}
-
-			envExists := exists(o.Filepath)
-
-			if envExists {
-				oldEnv, err := envset.LoadMetadataFile(o.Filepath)
-				if err != nil {
-					return err
-				}
-
-				if changed, err := envset.CompareMetadataFiles(&newEnv, oldEnv); !changed && !o.Print {
-					return nil
-				} else if err != nil {
-					return err
-				}
-			}
-
-			str, err := newEnv.ToJSON()
-			if err != nil {
-				return fmt.Errorf("env file to json: %w", err)
-			}
-
-			str += "\n"
-
-			if o.Print {
-
-				if shouldClean {
-					_ = os.RemoveAll(dir)
-				}
-				_, err = fmt.Print(str)
-				if err != nil {
-					return fmt.Errorf("print output: %w", err)
-				}
-				return nil
-			}
-
-			if !envExists {
-				if err := writeMetadataFile(o.Filepath, str); err != nil {
-					return fmt.Errorf("write file %s: %w", o.Filepath, err)
-				}
-			} else if o.Overwrite {
-				if err := writeMetadataFile(o.Filepath, str); err != nil {
-					return fmt.Errorf("overwrite file %s: %w", o.Filepath, err)
-				}
-			}
-
-			return nil
-		},
+		Action: runMetadataCommand,
 		Subcommands: []*cli.Command{
 			{
 				Name:  "compare",
@@ -177,81 +78,209 @@ EXAMPLE:
 					},
 				},
 				Action: func(c *cli.Context) error {
-					print := c.Bool("print")
-					json := c.Bool("json")
-					name := c.String("section")
-
-					ignored := c.StringSlice("ignore")
-
-					ignored = cnf.MergeIgnored(name, ignored)
-
-					var source string
-					var target string
-
-					if c.Args().Len() == 1 {
-						source, _ = envset.FileFinder(filepath.Join(cnf.Meta.Dir, cnf.Meta.File))
-						source = makeRelative(source)
-						target = c.Args().Get(0)
-					} else {
-						source = c.Args().Get(0)
-						target = c.Args().Get(1)
-					}
-
-					if msg := validateMetadataArgs(source, target); msg != "" {
-						return cli.Exit(msg, 1)
-					}
-
-					src := envset.EnvFile{}
-					if err := src.FromJSON(source); err != nil {
-						return cli.Exit(fmt.Sprintf("Unable to load source metadata file %q: %s", source, err), 1)
-					}
-
-					s1, err := src.GetSection(name)
-					if err != nil {
-						fmt.Printf("source: %s\ntarget: %s\nerror: %s\n", source, target, err.Error())
-						return cli.Exit(
-							fmt.Sprintf("Section \"%s\" not found in source metadata file:\n%s", name, source),
-							1,
-						)
-					}
-
-					tgt := envset.EnvFile{}
-					if err := tgt.FromJSON(target); err != nil {
-						return cli.Exit(fmt.Sprintf("Unable to load target metadata file %q: %s", target, err), 1)
-					}
-					s2, err := tgt.GetSection(name)
-
-					if err != nil {
-						return cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
-					}
-
-					s3 := envset.CompareSections(*s1, *s2, ignored)
-					s3.Name = name
-
-					if !s3.IsEmpty() {
-						if print && !json {
-							prettyPrint(s3, source, target, ignored)
-							return cli.Exit("", 1)
-						} else if print && json {
-							j, err := s3.ToJSON()
-							if err != nil {
-								return cli.Exit(err, 1)
-							}
-
-							return cli.Exit(j, 1)
-						}
-						//Exit with error e.g. to fail CI
-						return cli.Exit("Metadata test failed!", 1)
-					} else if print && !json {
-						prettyOk(source, target)
-						return cli.Exit("", 0)
-					}
-
-					return nil
+					return runMetadataCompare(cnf, c)
 				},
 			},
 		},
 	}
+}
+
+func runMetadataCommand(c *cli.Context) error {
+	options, dir, shouldClean, err := metadataOptions(c)
+	if err != nil {
+		return err
+	}
+
+	newEnv, err := envset.CreateMetadataFile(options)
+	if err != nil {
+		return err
+	}
+
+	envExists := exists(options.Filepath)
+	if envExists {
+		changed, err := metadataChanged(options.Filepath, &newEnv)
+		if err != nil || !changed && !options.Print {
+			return err
+		}
+	}
+
+	contents, err := newEnv.ToJSON()
+	if err != nil {
+		return fmt.Errorf("env file to json: %w", err)
+	}
+	contents += "\n"
+
+	if options.Print {
+		return printMetadata(contents, dir, shouldClean)
+	}
+
+	return saveMetadata(options, contents, envExists)
+}
+
+func metadataOptions(c *cli.Context) (envset.MetadataOptions, string, bool, error) {
+	projectURL, err := gitconfig.OriginURL()
+	if err != nil && !isMissingRemoteURL(err) {
+		return envset.MetadataOptions{}, "", false, err
+	}
+
+	dir, err := filepath.Abs(c.String("filepath"))
+	if err != nil {
+		return envset.MetadataOptions{}, "", false, err
+	}
+
+	shouldClean := false
+	if ok := exists(dir); !ok {
+		shouldClean = true
+		if err = os.MkdirAll(dir, 0750); err != nil {
+			return envset.MetadataOptions{}, "", false, err
+		}
+	}
+
+	algorithm := c.String("hash-algo")
+	secret := c.String("secret")
+	if secret != "" {
+		algorithm = envset.HashHMAC
+	}
+
+	return envset.MetadataOptions{
+		Name:          cliopts.String(c, cliopts.EnvFileFlag),
+		Filepath:      filepath.Join(dir, c.String("filename")),
+		Algorithm:     algorithm,
+		Project:       projectURL,
+		Globals:       c.Bool("globals"),
+		GlobalSection: "globals", //TODO: make flag
+		Overwrite:     c.Bool("overwrite"),
+		Print:         c.Bool("print"),
+		Values:        c.Bool("values"),
+		Secret:        secret,
+	}, dir, shouldClean, nil
+}
+
+func metadataChanged(path string, newEnv *envset.EnvFile) (bool, error) {
+	oldEnv, err := envset.LoadMetadataFile(path)
+	if err != nil {
+		return false, err
+	}
+
+	return envset.CompareMetadataFiles(newEnv, oldEnv)
+}
+
+func printMetadata(contents, dir string, shouldClean bool) error {
+	if shouldClean {
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("remove metadata dir %s: %w", dir, err)
+		}
+	}
+
+	if _, err := fmt.Print(contents); err != nil {
+		return fmt.Errorf("print output: %w", err)
+	}
+	return nil
+}
+
+func saveMetadata(options envset.MetadataOptions, contents string, envExists bool) error {
+	if !envExists {
+		if err := writeMetadataFile(options.Filepath, contents); err != nil {
+			return fmt.Errorf("write file %s: %w", options.Filepath, err)
+		}
+		return nil
+	}
+
+	if options.Overwrite {
+		if err := writeMetadataFile(options.Filepath, contents); err != nil {
+			return fmt.Errorf("overwrite file %s: %w", options.Filepath, err)
+		}
+	}
+	return nil
+}
+
+func runMetadataCompare(cnf *config.Config, c *cli.Context) error {
+	printOutput := c.Bool("print")
+	asJSON := c.Bool("json")
+	name := c.String("section")
+	ignored := cnf.MergeIgnored(name, c.StringSlice("ignore"))
+
+	source, target, err := metadataComparePaths(cnf, c)
+	if err != nil {
+		return cli.Exit(err.Error(), 1)
+	}
+
+	if msg := validateMetadataArgs(source, target); msg != "" {
+		return cli.Exit(msg, 1)
+	}
+
+	s1, s2, err := loadCompareSections(source, target, name)
+	if err != nil {
+		return err
+	}
+
+	diff := envset.CompareSections(*s1, *s2, ignored)
+	diff.Name = name
+
+	return reportCompareResult(diff, source, target, ignored, printOutput, asJSON)
+}
+
+func metadataComparePaths(cnf *config.Config, c *cli.Context) (string, string, error) {
+	if c.Args().Len() != 1 {
+		return c.Args().Get(0), c.Args().Get(1), nil
+	}
+
+	source, err := envset.FileFinder(filepath.Join(cnf.Meta.Dir, cnf.Meta.File))
+	if err != nil {
+		return "", "", fmt.Errorf("find default source metadata: %w", err)
+	}
+
+	return makeRelative(source), c.Args().Get(0), nil
+}
+
+func loadCompareSections(source, target, name string) (*envset.EnvSection, *envset.EnvSection, error) {
+	src := envset.EnvFile{}
+	if err := src.FromJSON(source); err != nil {
+		return nil, nil, cli.Exit(fmt.Sprintf("Unable to load source metadata file %q: %s", source, err), 1)
+	}
+
+	s1, err := src.GetSection(name)
+	if err != nil {
+		fmt.Printf("source: %s\ntarget: %s\nerror: %s\n", source, target, err.Error())
+		return nil, nil, cli.Exit(fmt.Sprintf("Section \"%s\" not found in source metadata file:\n%s", name, source), 1)
+	}
+
+	tgt := envset.EnvFile{}
+	if err := tgt.FromJSON(target); err != nil {
+		return nil, nil, cli.Exit(fmt.Sprintf("Unable to load target metadata file %q: %s", target, err), 1)
+	}
+
+	s2, err := tgt.GetSection(name)
+	if err != nil {
+		return nil, nil, cli.Exit(fmt.Sprintf("Section \"%s\" not found in target metadata file.", name), 1)
+	}
+
+	return s1, s2, nil
+}
+
+func reportCompareResult(diff envset.EnvSection, source, target string, ignored []string, printOutput, asJSON bool) error {
+	if diff.IsEmpty() {
+		if printOutput && !asJSON {
+			prettyOk(source, target)
+			return cli.Exit("", 0)
+		}
+		return nil
+	}
+
+	if printOutput && !asJSON {
+		prettyPrint(diff, source, target, ignored)
+		return cli.Exit("", 1)
+	}
+
+	if printOutput && asJSON {
+		j, err := diff.ToJSON()
+		if err != nil {
+			return cli.Exit(err, 1)
+		}
+		return cli.Exit(j, 1)
+	}
+
+	return cli.Exit("Metadata test failed!", 1)
 }
 
 func prettyPrint(diff envset.EnvSection, source, target string, ignored []string) {

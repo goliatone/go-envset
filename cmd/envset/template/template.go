@@ -26,7 +26,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			&cli.BoolFlag{Name: "overwrite", Usage: "overwrite file, this will delete any changes"},
 		},
 		Action: func(c *cli.Context) error {
-			print := c.Bool("print")
+			printOutput := c.Bool("print")
 			filename := cliopts.String(c, cliopts.EnvFileFlag)
 			template := c.String("filename")
 			dir := c.String("filepath")
@@ -45,7 +45,7 @@ func GetCommand(cnf *config.Config) *cli.Command {
 			//TODO: This should take a a template file which we use to run against our thing
 			template = filepath.Join(dir, template)
 
-			return envset.DocumentTemplate(filename, template, overwrite, print)
+			return envset.DocumentTemplate(filename, template, overwrite, printOutput)
 		},
 	}
 }
