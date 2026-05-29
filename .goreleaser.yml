@@ -24,10 +24,12 @@ builds:
     main: "./cmd/envset/main.go"
     binary: "envset"
     ldflags:
-      - -s -w
-      - -X github.com/goliatone/go-envset/pkg/version.Tag=v{{.Version}}
-      - -X github.com/goliatone/go-envset/pkg/version.Time={{.Date}}
-      - -X github.com/goliatone/go-envset/pkg/version.User=goliatone
+      - >-
+        -s -w
+        -X github.com/goliatone/go-envset/pkg/version.Tag={{ .Version }}
+        -X github.com/goliatone/go-envset/pkg/version.Time={{ .Date }}
+        -X github.com/goliatone/go-envset/pkg/version.User=goreleaser
+        -X github.com/goliatone/go-envset/pkg/version.Commit={{ .FullCommit }}
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}{{ with .Arm }}v{{ . }}{{ end }}'
 checksum:
@@ -42,18 +44,23 @@ changelog:
       - "^test:"
       - "^Update README"
       - "merge fix"
-brews:
+homebrew_casks:
   - name: envset
+    binaries:
+      - envset
     repository:
       owner: goliatone
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    directory: Formula
+    directory: Casks
     description: run commands in an environment defined using a ini configuration file.
     homepage: https://github.com/goliatone/go-envset
-    license: "MIT"
-    test: |
-      system "#{bin}/envset -V"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/envset"]
+          end
 nfpms:
   - id: envset
     file_name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}{{ with .Arm }}v{{ . }}{{ end }}'
