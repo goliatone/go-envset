@@ -55,12 +55,14 @@ homebrew_casks:
     directory: Casks
     description: run commands in an environment defined using a ini configuration file.
     homepage: https://github.com/goliatone/go-envset
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/envset"]
-          end
+    # Escape the Homebrew path token so GoReleaser leaves it for install time.
+    custom_block: |
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr",
+              args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/envset"]
+        end
+      end
 nfpms:
   - id: envset
     file_name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}{{ with .Arm }}v{{ . }}{{ end }}'
